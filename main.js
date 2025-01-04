@@ -53,7 +53,23 @@ function analyzeComponent(filePath, depth = 0, globalData = { components: [] }) 
   return globalData; // Return the accumulated data
 }
 
-// Consolidate and generate the final graph
-const componentFilePath = path.join(__dirname, '../rollup/ar-ad-manager/src/components/AdCreate/AdCreate.jsx');
+// Get the input component path from CLI arguments
+const inputComponentPath = process.argv[2];
+
+if (!inputComponentPath) {
+  console.error('Error: No component file path provided. Usage: node main.js <component-file-path>');
+  process.exit(1);
+}
+
+// Resolve the full path of the input component
+const componentFilePath = path.resolve(inputComponentPath);
+
+if (!fs.existsSync(componentFilePath)) {
+  console.error(`Error: Component file not found at ${componentFilePath}`);
+  process.exit(1);
+}
+
+// Analyze the input component and generate the graph
 const allComponents = analyzeComponent(componentFilePath);
+console.log(JSON.stringify(allComponents, null, 2));
 generateGraph(allComponents); // Generate the graph once
