@@ -9,25 +9,39 @@ function generateGraph(data) {
   dotContent += '  node [shape=box, style=rounded, fontname="Helvetica"];\n';
 
   const components = data?.components || [];
+  const drawnEdges = new Set(); // Track edges already drawn to avoid duplicates
 
   // Generate nodes and edges
   components.forEach(component => {
     dotContent += `  "${component.name}" [label="${component.name}\\nState: ${component.state || 'None'}"];\n`;
 
-    // Add edges for children
+    // Draw one arrow per unique child component
     (component.children || []).forEach(child => {
       const props = component.props?.[child] || [];
-      dotContent += `  "${component.name}" -> "${child}" [label="Props: ${props.join(', ')}", color=green];\n`;
+      const formattedProps = props.length ? `Props:\\n ${props.join('\\n')}` : '';
+      const edgeKey = `"${component.name}" -> "${child}"`;
+
+      if (!drawnEdges.has(edgeKey)) {
+        dotContent += `  ${edgeKey} [label="${formattedProps}", color="#8C8C8C"];\n`;
+        drawnEdges.add(edgeKey); // Mark this edge as drawn
+      }
     });
 
-    // Add edges for Redux props
+    // Draw Redux-related edges
     (component.reduxProps || []).forEach(prop => {
-      dotContent += `  "Redux Store" -> "${component.name}" [label="${prop}", color=red];\n`;
+      const reduxEdgeKey = `"Redux Store" -> "${component.name}" [label="${prop}", color="#C57C00"]`;
+      if (!drawnEdges.has(reduxEdgeKey)) {
+        dotContent += `  ${reduxEdgeKey};\n`;
+        drawnEdges.add(reduxEdgeKey);
+      }
     });
 
-    // Add edges for actions
     (component.actions || []).forEach(action => {
-      dotContent += `  "${component.name}" -> "Redux Store" [label="${action}", color=blue];\n`;
+      const actionEdgeKey = `"${component.name}" -> "Redux Store" [label="${action}", color="#C57C00"]`;
+      if (!drawnEdges.has(actionEdgeKey)) {
+        dotContent += `  ${actionEdgeKey};\n`;
+        drawnEdges.add(actionEdgeKey);
+      }
     });
   });
 
