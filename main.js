@@ -1,15 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const parser = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
 const parseComponentForStateAndRedux = require('./parseReactComponents');
 const generateGraph = require('./generateGraph');
 
 function logTree(componentData, depth = 0) {
   const prefix = '  '.repeat(depth); // Indent based on depth
-  console.log(`${prefix}- ${componentData.name}`);
+  console.log(`${prefix}- ${componentData.name || 'Unnamed Component'}`);
   componentData.children.forEach(child => {
-    console.log(`${prefix}  -> ${child}`);
+    // child is a string (component name) at this point, before recursive resolution
+    const childName = typeof child === 'string' ? child : (child.name || 'Unnamed Component');
+    console.log(`${prefix}  -> ${childName}`);
   });
 }
 
@@ -29,28 +29,35 @@ const resolveImportPath = (importMap, childName, basePath) => {
   return resolvedPath;
 };
 
-function analyzeComponent(filePath, depth = 0, globalData = { components: [] }) {
+const analyzeComponent = (filePath, depth = 0, visited = new Set(), context = '') => {
+  const uniqueKey = `${filePath}::${context}`;
+  if (visited.has(uniqueKey)) {
+    return { name: path.basename(filePath, path.extname(filePath)), error: 'Already parsed' };
+  }
+  visited.add(uniqueKey);
+
   const fileContent = fs.readFileSync(filePath, 'utf-8');
   const componentData = parseComponentForStateAndRedux(fileContent, []);
-
-  // Log the ASCII tree representation
   logTree(componentData, depth);
 
-  // Add component data to the global structure
-  globalData.components.push(componentData);
-
-  // Recursively parse children
+  // Recursively resolve children
   const basePath = path.dirname(filePath);
-  componentData.children.forEach(child => {
-    const childPath = resolveImportPath(componentData.importMap, child, basePath);
+  componentData.children = componentData.children.map(childName => {
+    const childPath = resolveImportPath(componentData.importMap, childName, basePath);
     if (childPath) {
-      analyzeComponent(childPath, depth + 1, globalData);
-    } else {
-      console.warn(`Child component file not found: ${child}`);
+      const resolvedChild = analyzeComponent(childPath, depth + 1, visited, `${context}-${childName}`);
+      // Attach the props this parent passes to this child
+      resolvedChild.propsFromParent = componentData.childProps[childName] || null;
+      return resolvedChild;
     }
+    return {
+      name: childName,
+      error: 'File not found',
+      propsFromParent: componentData.childProps[childName] || null
+    };
   });
 
-  return globalData; // Return the accumulated data
+  return componentData;
 }
 
 // Get the input component path from CLI arguments
@@ -69,7 +76,10 @@ if (!fs.existsSync(componentFilePath)) {
   process.exit(1);
 }
 
-// Analyze the input component and generate the graph
-const allComponents = analyzeComponent(componentFilePath);
-console.log(JSON.stringify(allComponents, null, 2));
-generateGraph(allComponents); // Generate the graph once
+// Analyze the input component
+const nestedStructure = analyzeComponent(componentFilePath);
+console.log(JSON.stringify(nestedStructure, null, 2));
+
+// Generate graph with filename based on component name
+const outputName = nestedStructure.name || path.basename(componentFilePath, path.extname(componentFilePath));
+generateGraph(nestedStructure, outputName);

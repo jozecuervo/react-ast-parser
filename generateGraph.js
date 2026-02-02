@@ -1,62 +1,151 @@
 const { exec } = require('child_process');
 const fs = require('fs');
 
-function generateGraph(data) {
+const MAX_PROPS_DISPLAY = 5; // Max props to show before truncating
+
+function generateGraph(rootComponent, outputName = 'graph') {
   let dotContent = 'digraph G {\n';
   dotContent += '  rankdir=TB;\n';
-  dotContent += '  nodesep=0.5;\n';
-  dotContent += '  ranksep=0.8;\n';
-  dotContent += '  node [shape=box, style=rounded, fontname="Helvetica", fontsize=12, fontcolor=black];\n';
+  dotContent += '  nodesep=0.6;\n';
+  dotContent += '  ranksep=1.0;\n';
+  dotContent += '  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#E8F4FD", color="#4A90A4"];\n';
+  dotContent += '  edge [fontname="Helvetica", fontsize=9, color="#666666"];\n';
 
-  const components = data?.components || [];
-  const drawnEdges = new Set(); // Track edges already drawn to avoid duplicates
+  const drawnNodes = new Set();
+  const drawnEdges = new Set();
 
-  // Generate nodes and edges
-  components.forEach(component => {
-    dotContent += `  "${component.name}" [label=<
-      <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" BGCOLOR="#CBE3FA">
-        <TR><TD ALIGN="CENTER"><B>${component.name || 'component'}</B></TD></TR>
-        <TR><TD ALIGN="CENTER">State: ${component.state || 'None'}</TD></TR>
-      </TABLE>
-    >];\n`;
+  function formatPropsForEdge(propsFromParent) {
+    if (!propsFromParent) return '';
 
+    const allProps = [];
 
-    // Draw one arrow per unique child component
-    (component.children || []).forEach(child => {
-      const props = component.props?.[child] || [];
-      const formattedProps = props.length ? `Props:\\n ${props.join('\\n')}` : '';
-      const edgeKey = `"${component.name}" -> "${child}"`;
+    // Add state props with marker
+    (propsFromParent.stateProps || []).forEach(p => allProps.push(`●${p}`));
+    // Add function props with marker
+    (propsFromParent.functionProps || []).forEach(p => allProps.push(`ƒ${p}`));
+    // Add other props
+    (propsFromParent.otherProps || []).forEach(p => allProps.push(p));
 
+    if (allProps.length === 0) return '';
+
+    // Truncate if too many
+    if (allProps.length > MAX_PROPS_DISPLAY) {
+      const shown = allProps.slice(0, MAX_PROPS_DISPLAY);
+      const remaining = allProps.length - MAX_PROPS_DISPLAY;
+      return shown.join('\\n') + `\\n+${remaining} more`;
+    }
+
+    return allProps.join('\\n');
+  }
+
+  function formatNodeLabel(component) {
+    const name = component.name || 'Unknown';
+    const parts = [name];
+
+    // Add state if present
+    if (component.state && component.state.length > 0) {
+      const stateStr = component.state.length > 3
+        ? component.state.slice(0, 3).join(', ') + ` +${component.state.length - 3}`
+        : component.state.join(', ');
+      parts.push(`state: ${stateStr}`);
+    }
+
+    // Add redux if present
+    if (component.reduxProps && component.reduxProps.length > 0) {
+      const reduxStr = component.reduxProps.length > 3
+        ? component.reduxProps.slice(0, 3).join(', ') + ` +${component.reduxProps.length - 3}`
+        : component.reduxProps.join(', ');
+      parts.push(`redux: ${reduxStr}`);
+    }
+
+    return parts.join('\\n');
+  }
+
+  function getNodeStyle(component) {
+    // Different colors based on component characteristics
+    if (component.error === 'File not found') {
+      return 'fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"';
+    }
+    if (component.error === 'Already parsed') {
+      return 'fillcolor="#FFF3E0", color="#FF9800", style="rounded,filled,dashed"';
+    }
+    if (component.reduxProps && component.reduxProps.length > 0) {
+      return 'fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"'; // Green for Redux-connected
+    }
+    if (component.state && component.state.length > 0) {
+      return 'fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"'; // Blue for stateful
+    }
+    return 'fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"'; // Gray for stateless
+  }
+
+  function processComponent(component, parentName = null) {
+    if (!component || !component.name) return;
+
+    const nodeId = component.name;
+
+    // Draw node if not already drawn
+    if (!drawnNodes.has(nodeId)) {
+      drawnNodes.add(nodeId);
+
+      const label = formatNodeLabel(component);
+      const style = getNodeStyle(component);
+
+      dotContent += `  "${nodeId}" [label="${label}", ${style}];\n`;
+    }
+
+    // Draw edge from parent with props as label
+    if (parentName) {
+      const edgeKey = `${parentName}->${nodeId}`;
       if (!drawnEdges.has(edgeKey)) {
-        dotContent += `  ${edgeKey} [label="${formattedProps}", color="#8C8C8C", fontname="Helvetica", fontsize=10, align=left];\n`;
-        drawnEdges.add(edgeKey); // Mark this edge as drawn
+        drawnEdges.add(edgeKey);
+
+        const propsLabel = formatPropsForEdge(component.propsFromParent);
+        if (propsLabel) {
+          dotContent += `  "${parentName}" -> "${nodeId}" [label="${propsLabel}", fontcolor="#555555"];\n`;
+        } else {
+          dotContent += `  "${parentName}" -> "${nodeId}";\n`;
+        }
       }
-    });
+    }
 
-    // Draw Redux-related edges
-    (component.reduxProps || []).forEach(prop => {
-      const reduxEdgeKey = `"Redux Store" -> "${component.name}" [label="${prop}", color="#C57C00", fontname="Helvetica", fontsize=10];`;
-      if (!drawnEdges.has(reduxEdgeKey)) {
-        dotContent += `  ${reduxEdgeKey}\n`;
-        drawnEdges.add(reduxEdgeKey);
-      }
-    });
+    // Process children recursively
+    if (component.children && Array.isArray(component.children)) {
+      component.children.forEach(child => {
+        if (typeof child === 'object' && child.name) {
+          processComponent(child, nodeId);
+        }
+      });
+    }
+  }
 
-    (component.actions || []).forEach(action => {
-      const actionEdgeKey = `"${component.name}" -> "Redux Store" [label="${action}", color="#C57C00", fontname="Helvetica", fontsize=10];`;
-      if (!drawnEdges.has(actionEdgeKey)) {
-        dotContent += `  ${actionEdgeKey}\n`;
-        drawnEdges.add(actionEdgeKey);
-      }
-    });
-  });
+  processComponent(rootComponent);
 
-  dotContent += '}';
-  fs.writeFileSync('graph.dot', dotContent);
+  // Add legend
+  dotContent += '\n  // Legend\n';
+  dotContent += '  subgraph cluster_legend {\n';
+  dotContent += '    label="Legend";\n';
+  dotContent += '    fontsize=10;\n';
+  dotContent += '    color="#CCCCCC";\n';
+  dotContent += '    style="rounded";\n';
+  dotContent += '    node [shape=box, fontsize=9, width=1.2, height=0.3];\n';
+  dotContent += '    leg1 [label="Redux connected", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];\n';
+  dotContent += '    leg2 [label="Stateful", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];\n';
+  dotContent += '    leg3 [label="Stateless", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];\n';
+  dotContent += '    leg4 [label="External/Unresolved", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];\n';
+  dotContent += '    leg1 -> leg2 -> leg3 -> leg4 [style=invis];\n';
+  dotContent += '    edge_leg [shape=none, label="Edge labels:\\n●prop = state prop\\nƒprop = function prop", fontsize=8];\n';
+  dotContent += '  }\n';
 
-  exec('dot -Tsvg graph.dot -o graph.svg', (error) => {
+  dotContent += '}\n';
+
+  const dotFile = `${outputName}.dot`;
+  const svgFile = `${outputName}.svg`;
+
+  fs.writeFileSync(dotFile, dotContent);
+
+  exec(`dot -Tsvg ${dotFile} -o ${svgFile}`, (error) => {
     if (error) console.error(`Graphviz Error: ${error}`);
-    else console.log('Final graph generated as graph.svg');
+    else console.log(`Graph generated: ${svgFile}`);
   });
 }
 
