@@ -1,0 +1,244 @@
+digraph G {
+  rankdir=TB;
+  compound=true;
+  nodesep=0.5;
+  ranksep=0.8;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#666666"];
+
+  subgraph cluster_component__root {
+    label="Root Components";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "App" [label="App", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "AdsApp" [label="AdsApp\nredux: adToPreview, actualUser, adsAlertActionType +28", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "InspectApp" [label="InspectApp\nredux: advertisable, user, actualUser +5", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "UploadApp" [label="UploadApp\nredux: actualUser, advertisable, splitLoaded +1", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "AdCreateApp" [label="AdCreateApp\nredux: advertisable, user, actualUser +2", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "StretchApp" [label="StretchApp\nredux: actualUser, advertisable, parentPropsReady +2", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "LabsApp" [label="LabsApp\nredux: actualUser, advertisable, parentPropsReady +2", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "ABTestApp" [label="ABTestApp\nredux: advertisable, user, actualUser +1", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    "DemoApp" [label="DemoApp", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  }
+
+  subgraph cluster_component_components {
+    label="components";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "AdRequestButton" [label="AdRequestButton", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "AdsAlert" [label="AdsAlert", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  }
+
+  subgraph cluster_component_components_abtest {
+    label="components/abtest";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "ABTestList" [label="ABTestList\nstate: experiments, isLoading, error", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+    "ABTestStatusBadge" [label="ABTestStatusBadge", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestDetail" [label="ABTestDetail\nstate: test, experimentEid, isLoading +6", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+    "ABTestHeader" [label="ABTestHeader", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestStatusBanner" [label="ABTestStatusBanner", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestRecommendationBanner" [label="ABTestRecommendationBanner", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestVariantCarousel" [label="ABTestVariantCarousel", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "TestDurationCard" [label="TestDurationCard", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ChartTabButton" [label="ChartTabButton\nstate: activeTab", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+    "ABTestCreate" [label="ABTestCreate\nstate: pageState, error, isCreating +1", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+    "ABTestCreateSettings" [label="ABTestCreateSettings", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "StatusIndicator" [label="StatusIndicator", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestCreateDashboard" [label="ABTestCreateDashboard", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestVariantImageGrid" [label="ABTestVariantImageGrid", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestCreateImageUpload" [label="ABTestCreateImageUpload", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestFileUpload" [label="ABTestFileUpload\nstate: files", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+  }
+
+  subgraph cluster_component_components_modals {
+    label="components/modals";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "AdDeleteModal" [label="AdDeleteModal", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "AdPauseModal" [label="AdPauseModal", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  }
+
+  subgraph cluster_external__external {
+    label="External";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#ECEFF1";
+    color="#607D8B";
+
+    "Switch" [label="Switch", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "SentryRoute" [label="SentryRoute", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Option" [label="Option", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Select" [label="Select", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Modal" [label="Modal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Popper" [label="Popper", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Tooltip" [label="Tooltip", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "RequestFreeAdsModal" [label="RequestFreeAdsModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Subnav" [label="Subnav", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "ThemeLoaderTitle" [label="ThemeLoaderTitle", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Alerts" [label="Alerts", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdPicker" [label="AdPicker", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdCreateModal" [label="AdCreateModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdUploadModal" [label="AdUploadModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdCloneModal" [label="AdCloneModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdPreviewModal" [label="AdPreviewModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "ThemeLoader" [label="ThemeLoader", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdCreate" [label="AdCreate", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Link" [label="Link", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "VariantStats" [label="VariantStats", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "VariantPanel" [label="VariantPanel", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "PerformanceMetricsCard" [label="PerformanceMetricsCard", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "StatisticalConfidenceCard" [label="StatisticalConfidenceCard", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "InputGroup" [label="InputGroup", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Tabs" [label="Tabs", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Tab" [label="Tab", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "FileUploader" [label="FileUploader", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Logo" [label="Logo", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdPreview" [label="AdPreview", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdTypeIcon" [label="AdTypeIcon", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+  }
+
+  subgraph cluster_external__nextroll {
+    label="External";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#ECEFF1";
+    color="#607D8B";
+
+    "AdStretcher" [label="AdStretcher", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "LineChart" [label="LineChart", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "ArApp" [label="ArApp", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+  }
+
+  "App" -> "Switch";
+  "App" -> "SentryRoute" [label="exact\npath", fontcolor="#555555"];
+  "App" -> "AdsApp" [label="environment\ntelemetry", fontcolor="#555555"];
+  "AdsApp" -> "Option" [label="key\nvalue\ndisabled", fontcolor="#555555"];
+  "AdsApp" -> "Select" [label="ƒonOptionSelect\ndisabled\nplaceholder\nclassname\ni18n", fontcolor="#555555"];
+  "AdsApp" -> "AdRequestButton" [label="actualUser\nadvertisable\nadsRequested\ndisabled\nenv\n+4 more", fontcolor="#555555"];
+  "AdRequestButton" -> "Modal" [label="ƒonHide\nanimate\nclassName\nshow\nsize\n+1 more", fontcolor="#555555"];
+  "AdRequestButton" -> "Popper" [label="className\nhoverContent", fontcolor="#555555"];
+  "AdRequestButton" -> "Tooltip" [label="placement", fontcolor="#555555"];
+  "AdRequestButton" -> "RequestFreeAdsModal" [label="ƒonAdRequestCancel\nƒonAdRequestError\nƒonAdRequestSubmit\nƒonAdRequestSuccess\nactualUser\n+8 more", fontcolor="#555555"];
+  "AdsApp" -> "Subnav" [label="title\ni18n\nactionItem", fontcolor="#555555"];
+  "AdsApp" -> "App" [label="actualUser\nadvertisable\nbasePath\ncssFiles\nenvironment\n+9 more", fontcolor="#555555"];
+  "AdsApp" -> "ThemeLoaderTitle" [label="title\nsubtitle", fontcolor="#555555"];
+  "AdsApp" -> "AdsAlert" [label="adsAlertActionType\nadsAlertFail\nadsAlertSuccess\nadvertisable\nonDismissAlert", fontcolor="#555555"];
+  "AdsAlert" -> "Alerts" [label="advertisable\ni18n\ncontextualAlerts\nonPlacePixelClick\nonDismissContextualAlert", fontcolor="#555555"];
+  "AdsApp" -> "AdPicker" [label="ƒbulkEdit\nƒonPreview\nactualUser\nadStatusesReady\nadvertisable\n+16 more", fontcolor="#555555"];
+  "AdsApp" -> "AdCreateModal" [label="...spread\nisDynamicMode\nplacements\nshow", fontcolor="#555555"];
+  "AdsApp" -> "AdUploadModal" [label="actualUser\nadvertisable\nadsToEdit\napplyToAll\nbreadcrumb\n+14 more", fontcolor="#555555"];
+  "AdsApp" -> "AdDeleteModal" [label="adsToDelete\nshow\nonCancel\nonDelete\ni18n\n+1 more", fontcolor="#555555"];
+  "AdDeleteModal" -> "Modal" [label="animate\nclassName\nshow\nshowCloseButton\nonHide\n+2 more", fontcolor="#555555"];
+  "AdsApp" -> "AdPauseModal" [label="adsToPause\nshow\nonCancel\nonPause\ni18n\n+2 more", fontcolor="#555555"];
+  "AdPauseModal" -> "Modal" [label="animate\nclassName\nshow\nshowCloseButton\nonHide\n+2 more", fontcolor="#555555"];
+  "AdsApp" -> "AdCloneModal" [label="numAds\ni18n\nshow", fontcolor="#555555"];
+  "AdsApp" -> "AdPreviewModal" [label="actualUser\nad\nadvertisable\ndeliveryMap\nenv\n+7 more", fontcolor="#555555"];
+  "App" -> "InspectApp" [label="environment\ntelemetry", fontcolor="#555555"];
+  "InspectApp" -> "Subnav" [label="title\ni18n\nactionItem", fontcolor="#555555"];
+  "InspectApp" -> "App" [label="actualUser\nadvertisable\nbasePath\ncssFiles\nenvironment\n+11 more", fontcolor="#555555"];
+  "InspectApp" -> "AdUploadModal" [label="ads\nactualUser\nadvertisable\nenv\ni18n\n+8 more", fontcolor="#555555"];
+  "App" -> "UploadApp" [label="environment\ntelemetry", fontcolor="#555555"];
+  "UploadApp" -> "AdUploadModal" [label="ƒonCancel\nactualUser\nadvertisable\napplyToAll\nbreadcrumb\n+6 more", fontcolor="#555555"];
+  "App" -> "AdCreateApp";
+  "AdCreateApp" -> "ThemeLoader" [label="advertisable\ndisableRollWorksTheme", fontcolor="#555555"];
+  "AdCreateApp" -> "AdCreate" [label="actualUser\nadvertisable\nenv\ni18n\nisDynamicMode\n+6 more", fontcolor="#555555"];
+  "App" -> "StretchApp";
+  "StretchApp" -> "AdStretcher";
+  "App" -> "LabsApp" [label="environment", fontcolor="#555555"];
+  "App" -> "ABTestApp" [label="environment\ntelemetry\nview", fontcolor="#555555"];
+  "ABTestApp" -> "Link" [label="className\nto", fontcolor="#555555"];
+  "ABTestApp" -> "Subnav" [label="title\ni18n\nactionItem", fontcolor="#555555"];
+  "ABTestApp" -> "ABTestList" [label="i18n\nadvertisable", fontcolor="#555555"];
+  "ABTestList" -> "Link" [label="to\nclassName", fontcolor="#555555"];
+  "ABTestList" -> "ABTestStatusBadge" [label="outcome\ni18n", fontcolor="#555555"];
+  "ABTestApp" -> "ABTestDetail" [label="i18n\nadvertisable\nadEid", fontcolor="#555555"];
+  "ABTestDetail" -> "Link" [label="to\nclassName", fontcolor="#555555"];
+  "ABTestDetail" -> "Alerts" [label="className\ncontextualAlerts\nonDismissContextualAlert", fontcolor="#555555"];
+  "ABTestDetail" -> "ABTestHeader" [label="testName\nperformanceData\nvariantCount\nadvertisableParam\ni18n", fontcolor="#555555"];
+  "ABTestHeader" -> "Link" [label="to\nclassName\ntitle", fontcolor="#555555"];
+  "ABTestDetail" -> "ABTestStatusBanner" [label="performanceData\ni18n", fontcolor="#555555"];
+  "ABTestStatusBanner" -> "VariantStats" [label="variant\nisLeading\noutcome\nbadgeText\ni18n", fontcolor="#555555"];
+  "ABTestDetail" -> "ABTestRecommendationBanner" [label="performanceData\ni18n", fontcolor="#555555"];
+  "ABTestDetail" -> "ABTestVariantCarousel" [label="test\ncurrentIndex\nsetCurrentIndex\nadvertisableParam\ni18n", fontcolor="#555555"];
+  "ABTestVariantCarousel" -> "VariantPanel" [label="key\nvariant\nindex\nadEid\nadvertisableParam\n+1 more", fontcolor="#555555"];
+  "ABTestVariantCarousel" -> "Link" [label="to\nclassName\ntitle", fontcolor="#555555"];
+  "ABTestDetail" -> "TestDurationCard" [label="performanceData\ni18n", fontcolor="#555555"];
+  "TestDurationCard" -> "TestDurationCard" [label="performanceData\ni18n", fontcolor="#555555"];
+  "TestDurationCard" -> "PerformanceMetricsCard" [label="performanceData\ni18n", fontcolor="#555555"];
+  "TestDurationCard" -> "StatisticalConfidenceCard" [label="performanceData\ni18n", fontcolor="#555555"];
+  "ABTestDetail" -> "ChartTabButton" [label="performanceData\ni18n", fontcolor="#555555"];
+  "ChartTabButton" -> "ChartTabButton" [label="label\nisActive\nonClick", fontcolor="#555555"];
+  "ChartTabButton" -> "LineChart" [label="className\ndata\nxAxis\nyAxes\nranges", fontcolor="#555555"];
+  "ABTestApp" -> "ABTestCreate" [label="i18n\nadvertisable", fontcolor="#555555"];
+  "ABTestCreate" -> "ABTestCreateSettings" [label="pageState\nsetAdName\nsetDestinationUrl\ni18n", fontcolor="#555555"];
+  "ABTestCreateSettings" -> "InputGroup" [label="i18n\nlabel\ninputProps", fontcolor="#555555"];
+  "ABTestCreateSettings" -> "StatusIndicator" [label="pageState\ni18n", fontcolor="#555555"];
+  "StatusIndicator" -> "StatusIndicator" [label="status\ni18n", fontcolor="#555555"];
+  "ABTestCreate" -> "ABTestCreateDashboard" [label="pageState\nsetCurrentTab\ni18n\ncreateButtonEnabled\nsetIsUploadModalShown\n+1 more", fontcolor="#555555"];
+  "ABTestCreateDashboard" -> "Tabs" [label="activeKey\nonNavigate", fontcolor="#555555"];
+  "ABTestCreateDashboard" -> "Tab" [label="itemKey\ntitle", fontcolor="#555555"];
+  "ABTestCreateDashboard" -> "ABTestVariantImageGrid" [label="images\nsetIsUploadModalShown\ni18n", fontcolor="#555555"];
+  "ABTestVariantImageGrid" -> "ABTestCreateImageUpload" [label="key\nimageUrl\nuploadedImageWidth\nuploadedImageHeight\ndisplayedImageWidth\n+4 more", fontcolor="#555555"];
+  "ABTestCreate" -> "Modal" [label="show\nonHide\nsize", fontcolor="#555555"];
+  "ABTestCreate" -> "ABTestFileUpload" [label="i18n\nsetIsUploadModalShown\nsetImageUrl\nsetImageBase64", fontcolor="#555555"];
+  "ABTestFileUpload" -> "FileUploader" [label="i18n\nmultiple\nhandleUpload\naccept", fontcolor="#555555"];
+  "ABTestApp" -> "ArApp" [label="actualUser\nadvertisable\nbasePath\ncssFiles\nenvironment\n+10 more", fontcolor="#555555"];
+  "App" -> "DemoApp";
+  "DemoApp" -> "Logo" [label="brandmark\ni18n\nwordmark\nheight\nbusinessUnit", fontcolor="#555555"];
+  "DemoApp" -> "AdPreview" [label="canPlayVideo\nenableClickThrough\nrecommendedProductFetched\nad\nadvertisable\n+5 more", fontcolor="#555555"];
+  "DemoApp" -> "AdTypeIcon" [label="i18n\ntype", fontcolor="#555555"];
+
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    fontsize=10;
+    color="#CCCCCC";
+    style="rounded";
+    fillcolor="#FFFFFF";
+    node [shape=box, fontsize=9, width=1.4, height=0.3];
+    subgraph cluster_node_legend {
+      label="Node Types";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      leg_redux [label="Redux connected", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+      leg_state [label="Stateful", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+      leg_less [label="Stateless", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+      leg_ext [label="Unresolved", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+      leg_redux -> leg_state -> leg_less -> leg_ext [style=invis];
+    }
+    subgraph cluster_file_legend {
+      label="Cluster Types";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      fleg_comp [label="Components", fillcolor="#E3F2FD", color="#1976D2", style="rounded,filled"];
+      fleg_redux [label="Reducers", fillcolor="#F3E5F5", color="#7B1FA2", style="rounded,filled"];
+      fleg_action [label="Actions", fillcolor="#FFF3E0", color="#F57C00", style="rounded,filled"];
+      fleg_const [label="Constants", fillcolor="#E8F5E9", color="#388E3C", style="rounded,filled"];
+      fleg_util [label="Utils", fillcolor="#FFF8E1", color="#FBC02D", style="rounded,filled"];
+      fleg_ext [label="External", fillcolor="#ECEFF1", color="#607D8B", style="rounded,filled"];
+      fleg_comp -> fleg_redux -> fleg_action -> fleg_const -> fleg_util -> fleg_ext [style=invis];
+    }
+    edge_leg [shape=none, label="Edge labels:\n●prop = state prop\nƒprop = function prop", fontsize=8];
+  }
+}

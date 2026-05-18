@@ -1,0 +1,29 @@
+digraph G {
+  rankdir=TB;
+  nodesep=0.6;
+  ranksep=1.0;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#E8F4FD", color="#4A90A4"];
+  edge [fontname="Helvetica", fontsize=9, color="#666666"];
+  "DemoApp" [label="DemoApp", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  "Logo" [label="Logo", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+  "DemoApp" -> "Logo" [label="brandmark\ni18n\nwordmark\nheight\nbusinessUnit", fontcolor="#555555"];
+  "AdPreview" [label="AdPreview", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+  "DemoApp" -> "AdPreview" [label="canPlayVideo\nenableClickThrough\nrecommendedProductFetched\nad\nadvertisable\n+5 more", fontcolor="#555555"];
+  "AdTypeIcon" [label="AdTypeIcon", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+  "DemoApp" -> "AdTypeIcon" [label="i18n\ntype", fontcolor="#555555"];
+
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    fontsize=10;
+    color="#CCCCCC";
+    style="rounded";
+    node [shape=box, fontsize=9, width=1.2, height=0.3];
+    leg1 [label="Redux connected", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+    leg2 [label="Stateful", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+    leg3 [label="Stateless", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    leg4 [label="External/Unresolved", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    leg1 -> leg2 -> leg3 -> leg4 [style=invis];
+    edge_leg [shape=none, label="Edge labels:\n●prop = state prop\nƒprop = function prop", fontsize=8];
+  }
+}
