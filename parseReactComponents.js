@@ -4,50 +4,125 @@ const traverse = require('@babel/traverse').default;
 function parseComponentForStateAndRedux(fileContent) {
   const ast = parser.parse(fileContent, {
     sourceType: 'module',
-    plugins: ['jsx']
+    plugins: ['jsx', 'typescript']
   });
 
   let state = [];
   let reduxProps = [];
-  let actions = [];
+  let actions = [];  // Dispatched action names
   let componentName = '';
   let children = [];
   const childProps = {}; // Props per child: { ChildName: { stateProps: [], functionProps: [], otherProps: [] } }
   const importMap = {};
   const variableDeclarations = {}; // Track variable declarations for lookup
 
-  function extractActionsFromMapDispatch(mapDispatchNode) {
-    const actions = [];
-  
-    if (!mapDispatchNode || !mapDispatchNode.body) return actions;
-  
-    // Ensure we only handle the correct structure
-    if (mapDispatchNode.body.type === 'BlockStatement') {
-      mapDispatchNode.body.body.forEach(statement => {
-        if (
-          statement.type === 'ReturnStatement' &&
-          statement.argument &&
-          statement.argument.type === 'ObjectExpression'
-        ) {
-          statement.argument.properties.forEach(property => {
-            if (
-              property.value &&
-              (property.value.type === 'ArrowFunctionExpression' ||
-                property.value.type === 'FunctionExpression') &&
-              property.value.body &&
-              property.value.body.type === 'CallExpression'
-            ) {
-              const actionName = extractActionName(property.value.body);
-              if (actionName) actions.push(actionName);
-            }
-          });
+  // Enhanced Redux tracking
+  let reduxSlices = [];  // Which reducer slices are accessed (e.g., ['bootstrap', 'adsApp'])
+  let usesSelectorHook = false;
+  let usesDispatchHook = false;
+  let selectorExpressions = [];  // Selector functions/expressions from useSelector
+  const actionImports = {};  // Track action module imports: { 'BootstrapActions': './actions/bootstrap' }
+
+  // Extract reducer slices from mapStateToProps destructuring
+  // e.g., const { bootstrap, adsApp } = state; or (state) => { const { bootstrap } = state; ... }
+  function extractReducerSlices(funcNode) {
+    if (!funcNode) return [];
+    const slices = new Set();
+
+    // Get the state parameter name (usually 'state')
+    const stateParam = funcNode.params?.[0];
+    const stateParamName = stateParam?.name || 'state';
+
+    function visitNode(node) {
+      if (!node) return;
+
+      // Look for destructuring: const { bootstrap, adsApp } = state
+      if (node.type === 'VariableDeclaration') {
+        node.declarations.forEach(decl => {
+          if (
+            decl.id?.type === 'ObjectPattern' &&
+            decl.init?.type === 'Identifier' &&
+            decl.init.name === stateParamName
+          ) {
+            decl.id.properties.forEach(prop => {
+              if (prop.key?.name) slices.add(prop.key.name);
+            });
+          }
+        });
+      }
+
+      // Look for state.X access patterns
+      if (
+        node.type === 'MemberExpression' &&
+        node.object?.type === 'Identifier' &&
+        node.object.name === stateParamName &&
+        node.property?.name
+      ) {
+        slices.add(node.property.name);
+      }
+
+      // Recursively visit children
+      for (const key in node) {
+        if (node[key] && typeof node[key] === 'object') {
+          if (Array.isArray(node[key])) {
+            node[key].forEach(child => visitNode(child));
+          } else {
+            visitNode(node[key]);
+          }
         }
-      });
+      }
     }
-  
-    return actions;
+
+    visitNode(funcNode.body);
+    return Array.from(slices);
   }
-  
+
+  // Extract dispatched actions from mapDispatchToProps
+  // Handles: dispatch(Actions.doSomething()), dispatch(doSomething())
+  function extractActionsFromMapDispatch(mapDispatchNode) {
+    if (!mapDispatchNode) return [];
+    const extractedActions = new Set();
+
+    function findDispatchCalls(node) {
+      if (!node) return;
+
+      // Look for dispatch(X) calls
+      if (
+        node.type === 'CallExpression' &&
+        node.callee?.type === 'Identifier' &&
+        node.callee.name === 'dispatch' &&
+        node.arguments?.[0]
+      ) {
+        const arg = node.arguments[0];
+        // dispatch(Actions.doSomething(...))
+        if (arg.type === 'CallExpression' && arg.callee?.type === 'MemberExpression') {
+          const obj = arg.callee.object?.name;
+          const prop = arg.callee.property?.name;
+          if (obj && prop) extractedActions.add(`${obj}.${prop}`);
+        }
+        // dispatch(doSomething(...))
+        else if (arg.type === 'CallExpression' && arg.callee?.type === 'Identifier') {
+          extractedActions.add(arg.callee.name);
+        }
+      }
+
+      // Recursively visit children
+      for (const key in node) {
+        if (node[key] && typeof node[key] === 'object') {
+          if (Array.isArray(node[key])) {
+            node[key].forEach(child => findDispatchCalls(child));
+          } else {
+            findDispatchCalls(node[key]);
+          }
+        }
+      }
+    }
+
+    findDispatchCalls(mapDispatchNode);
+    return Array.from(extractedActions);
+  }
+
+  // Legacy function for backwards compatibility
   function extractActionName(callExpression) {
     if (
       callExpression.callee &&
@@ -148,6 +223,34 @@ function parseComponentForStateAndRedux(fileContent) {
             state.push(stateName);
           }
         }
+
+        // Capture useSelector hooks: const value = useSelector(state => state.x)
+        if (
+          declaration.init?.type === 'CallExpression' &&
+          declaration.init.callee?.name === 'useSelector'
+        ) {
+          usesSelectorHook = true;
+          const selectorArg = declaration.init.arguments[0];
+          // Extract what's being selected
+          if (selectorArg?.type === 'ArrowFunctionExpression' || selectorArg?.type === 'FunctionExpression') {
+            const slices = extractReducerSlices(selectorArg);
+            slices.forEach(s => {
+              if (!reduxSlices.includes(s)) reduxSlices.push(s);
+            });
+            // Track the selected value as a redux prop
+            if (declaration.id?.name) {
+              reduxProps.push(declaration.id.name);
+            }
+          }
+        }
+
+        // Capture useDispatch hooks: const dispatch = useDispatch()
+        if (
+          declaration.init?.type === 'CallExpression' &&
+          declaration.init.callee?.name === 'useDispatch'
+        ) {
+          usesDispatchHook = true;
+        }
       });
     },  
     
@@ -164,6 +267,11 @@ function parseComponentForStateAndRedux(fileContent) {
         }
         if (mapStateFn?.type === 'FunctionExpression' || mapStateFn?.type === 'ArrowFunctionExpression') {
           reduxProps.push(...extractReduxPropsFromFunction(mapStateFn));
+          // Extract reducer slices accessed
+          const slices = extractReducerSlices(mapStateFn);
+          slices.forEach(s => {
+            if (!reduxSlices.includes(s)) reduxSlices.push(s);
+          });
         }
 
         // Extract actions from mapDispatchToProps
@@ -175,17 +283,37 @@ function parseComponentForStateAndRedux(fileContent) {
           mapDispatchFn?.type === 'ArrowFunctionExpression' ||
           mapDispatchFn?.type === 'FunctionExpression'
         ) {
-          extractActionsFromMapDispatch(mapDispatchFn);
+          const extractedActions = extractActionsFromMapDispatch(mapDispatchFn);
+          extractedActions.forEach(a => {
+            if (!actions.includes(a)) actions.push(a);
+          });
         }
       }
     },
 
-    // Capture imports for resolving child component paths
+    // Capture ALL imports for resolving paths
     ImportDeclaration(path) {
       const importedModule = path.node.source.value;
       path.node.specifiers.forEach(specifier => {
+        // Default import: import Foo from './foo'
         if (specifier.type === 'ImportDefaultSpecifier') {
           importMap[specifier.local.name] = importedModule;
+        }
+        // Named import: import { Foo, Bar as Baz } from './foo'
+        else if (specifier.type === 'ImportSpecifier') {
+          importMap[specifier.local.name] = importedModule;
+        }
+        // Namespace import: import * as Foo from './foo'
+        else if (specifier.type === 'ImportNamespaceSpecifier') {
+          importMap[specifier.local.name] = importedModule;
+          // Track action imports (typically end with Actions or from actions/ directory)
+          if (
+            specifier.local.name.endsWith('Actions') ||
+            importedModule.includes('/actions/') ||
+            importedModule.includes('/actions')
+          ) {
+            actionImports[specifier.local.name] = importedModule;
+          }
         }
       });
     },
@@ -242,6 +370,10 @@ function parseComponentForStateAndRedux(fileContent) {
     }
   });
 
+  // Determine Redux connection type
+  const isConnected = reduxProps.length > 0 || actions.length > 0;
+  const usesHooks = usesSelectorHook || usesDispatchHook;
+
   return {
     name: componentName,
     state,
@@ -250,6 +382,15 @@ function parseComponentForStateAndRedux(fileContent) {
     children,
     childProps,
     importMap,
+    // Enhanced Redux data
+    redux: {
+      isConnected,
+      usesHooks,
+      usesSelectorHook,
+      usesDispatchHook,
+      slices: reduxSlices,  // Which reducer slices are accessed
+      actionImports,  // Action module imports
+    },
   };
 }
 
