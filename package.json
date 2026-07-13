@@ -1,14 +1,29 @@
 {
   "name": "react-ast-parser",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "CLI tool for analyzing React component dependencies using Babel AST parsing and Graphviz visualization",
+  "main": "main.js",
+  "bin": {
+    "react-ast-parser": "./main.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "react",
+    "ast",
+    "parser",
+    "dependency",
+    "graph",
+    "graphviz",
+    "component",
+    "redux"
+  ],
+  "author": "jozecuervo",
   "license": "ISC",
-  "description": "",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {
     "@babel/parser": "^7.26.3",
     "@babel/traverse": "^7.26.4",
