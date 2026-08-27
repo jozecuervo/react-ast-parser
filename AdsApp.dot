@@ -1,0 +1,133 @@
+digraph G {
+  rankdir=TB;
+  compound=true;
+  nodesep=0.5;
+  ranksep=0.8;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#666666"];
+
+  subgraph cluster_component__root {
+    label="Root Components";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "AdsApp" [label="AdsApp\n⚡ connect()\n📦 bootstrap, adsApp, adPickerReducer\n🎬 BootstrapActions.fetchAdvertisableData, BootstrapActions.fetchAdStatusesData +30\nprops: adToPreview, actualUser, adsAlertActionType +28", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled", penwidth=2];
+  }
+
+  subgraph cluster_component_components {
+    label="components";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "AdRequestButton" [label="AdRequestButton", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "AdsAlert" [label="AdsAlert", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  }
+
+  subgraph cluster_component_components_modals {
+    label="components/modals";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "AdDeleteModal" [label="AdDeleteModal", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "AdPauseModal" [label="AdPauseModal", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  }
+
+  subgraph cluster_external__nextroll {
+    label="External";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#ECEFF1";
+    color="#607D8B";
+
+    "Option" [label="Option", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Select" [label="Select", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Modal" [label="Modal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Popper" [label="Popper", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Tooltip" [label="Tooltip", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "RequestFreeAdsModal" [label="RequestFreeAdsModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Subnav" [label="Subnav", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "App" [label="App", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "ThemeLoaderTitle" [label="ThemeLoaderTitle", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "Alerts" [label="Alerts", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdPicker" [label="AdPicker", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdCreateModal" [label="AdCreateModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdUploadModal" [label="AdUploadModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdCloneModal" [label="AdCloneModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+    "AdPreviewModal" [label="AdPreviewModal", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+  }
+
+  "AdsApp" -> "Option" [label="key\nvalue\ndisabled", fontcolor="#555555"];
+  "AdsApp" -> "Select" [label="ƒonOptionSelect\ndisabled\nplaceholder\nclassname\ni18n", fontcolor="#555555"];
+  "AdsApp" -> "AdRequestButton" [label="actualUser\nadvertisable\nadsRequested\ndisabled\nenv\n+4 more", fontcolor="#555555"];
+  "AdRequestButton" -> "Modal" [label="ƒonHide\nanimate\nclassName\nshow\nsize\n+1 more", fontcolor="#555555"];
+  "AdRequestButton" -> "Popper" [label="className\nhoverContent", fontcolor="#555555"];
+  "AdRequestButton" -> "Tooltip" [label="placement", fontcolor="#555555"];
+  "AdRequestButton" -> "RequestFreeAdsModal" [label="ƒonAdRequestCancel\nƒonAdRequestError\nƒonAdRequestSubmit\nƒonAdRequestSuccess\nactualUser\n+8 more", fontcolor="#555555"];
+  "AdsApp" -> "Subnav" [label="title\ni18n\nactionItem", fontcolor="#555555"];
+  "AdsApp" -> "App" [label="actualUser\nadvertisable\nbasePath\ncssFiles\nenvironment\n+9 more", fontcolor="#555555"];
+  "AdsApp" -> "ThemeLoaderTitle" [label="title\nsubtitle", fontcolor="#555555"];
+  "AdsApp" -> "AdsAlert" [label="adsAlertActionType\nadsAlertFail\nadsAlertSuccess\nadvertisable\nonDismissAlert", fontcolor="#555555"];
+  "AdsAlert" -> "Alerts" [label="advertisable\ni18n\ncontextualAlerts\nonPlacePixelClick\nonDismissContextualAlert", fontcolor="#555555"];
+  "AdsApp" -> "AdPicker" [label="ƒbulkEdit\nƒonPreview\nactualUser\nadStatusesReady\nadvertisable\n+16 more", fontcolor="#555555"];
+  "AdsApp" -> "AdCreateModal" [label="...spread\nisDynamicMode\nplacements\nshow", fontcolor="#555555"];
+  "AdsApp" -> "AdUploadModal" [label="actualUser\nadvertisable\nadsToEdit\napplyToAll\nbreadcrumb\n+14 more", fontcolor="#555555"];
+  "AdsApp" -> "AdDeleteModal" [label="adsToDelete\nshow\nonCancel\nonDelete\ni18n\n+1 more", fontcolor="#555555"];
+  "AdDeleteModal" -> "Modal" [label="animate\nclassName\nshow\nshowCloseButton\nonHide\n+2 more", fontcolor="#555555"];
+  "AdsApp" -> "AdPauseModal" [label="adsToPause\nshow\nonCancel\nonPause\ni18n\n+2 more", fontcolor="#555555"];
+  "AdPauseModal" -> "Modal" [label="animate\nclassName\nshow\nshowCloseButton\nonHide\n+2 more", fontcolor="#555555"];
+  "AdsApp" -> "AdCloneModal" [label="numAds\ni18n\nshow", fontcolor="#555555"];
+  "AdsApp" -> "AdPreviewModal" [label="actualUser\nad\nadvertisable\ndeliveryMap\nenv\n+7 more", fontcolor="#555555"];
+
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    fontsize=10;
+    color="#CCCCCC";
+    style="rounded";
+    fillcolor="#FFFFFF";
+    node [shape=box, fontsize=9, width=1.4, height=0.3];
+    subgraph cluster_node_legend {
+      label="Node Types";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      leg_hooks [label="Redux Hooks", fillcolor="#E0F2F1", color="#00897B", style="rounded,filled", penwidth=2];
+      leg_connect [label="Redux connect()", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled", penwidth=2];
+      leg_dispatch [label="Dispatches only", fillcolor="#FFF3E0", color="#FF9800", style="rounded,filled"];
+      leg_state [label="Local state", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+      leg_less [label="Stateless", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+      leg_ext [label="Unresolved", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+      leg_hooks -> leg_connect -> leg_dispatch -> leg_state -> leg_less -> leg_ext [style=invis];
+    }
+    subgraph cluster_file_legend {
+      label="Cluster Types";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      fleg_comp [label="Components", fillcolor="#E3F2FD", color="#1976D2", style="rounded,filled"];
+      fleg_redux [label="Reducers", fillcolor="#F3E5F5", color="#7B1FA2", style="rounded,filled"];
+      fleg_action [label="Actions", fillcolor="#FFF3E0", color="#F57C00", style="rounded,filled"];
+      fleg_const [label="Constants", fillcolor="#E8F5E9", color="#388E3C", style="rounded,filled"];
+      fleg_util [label="Utils", fillcolor="#FFF8E1", color="#FBC02D", style="rounded,filled"];
+      fleg_ext [label="External", fillcolor="#ECEFF1", color="#607D8B", style="rounded,filled"];
+      fleg_comp -> fleg_redux -> fleg_action -> fleg_const -> fleg_util -> fleg_ext [style=invis];
+    }
+    subgraph cluster_symbols_legend {
+      label="Symbols";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      sym_leg [shape=none, label="⚡ Redux connection\n📦 Store slices\n🎬 Dispatched actions\n\nEdge styles:\n━━━ JSX child\n┄┄┄ Import only\n\nProp types:\n●prop = state prop\nƒprop = function prop", fontsize=8];
+    }
+  }
+}

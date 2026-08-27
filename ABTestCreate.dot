@@ -1,0 +1,88 @@
+digraph G {
+  rankdir=TB;
+  compound=true;
+  nodesep=0.5;
+  ranksep=0.8;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#666666"];
+
+  subgraph cluster_component__root {
+    label="Root Components";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#E3F2FD";
+    color="#1976D2";
+
+    "ABTestCreate" [label="ABTestCreate\nstate: pageState, error, isCreating +1", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+    "ABTestCreateSettings" [label="ABTestCreateSettings", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "StatusIndicator" [label="StatusIndicator", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestCreateDashboard" [label="ABTestCreateDashboard", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestVariantImageGrid" [label="ABTestVariantImageGrid", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestCreateImageUpload" [label="ABTestCreateImageUpload", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "ABTestFileUpload" [label="ABTestFileUpload\nstate: files", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+  }
+
+  subgraph cluster_external__nextroll {
+    label="External";
+    fontsize=12;
+    fontname="Helvetica";
+    style="rounded,filled";
+    fillcolor="#ECEFF1";
+    color="#607D8B";
+
+    "InputGroup" [label="InputGroup", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "Tabs" [label="Tabs", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "Tab" [label="Tab", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "Modal" [label="Modal", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+    "FileUploader" [label="FileUploader", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+  }
+
+  "ABTestCreate" -> "ABTestCreateSettings" [label="pageState\nsetAdName\nsetDestinationUrl\ni18n", fontcolor="#555555"];
+  "ABTestCreateSettings" -> "InputGroup" [label="i18n\nlabel\ninputProps", fontcolor="#555555"];
+  "ABTestCreateSettings" -> "StatusIndicator" [label="pageState\ni18n", fontcolor="#555555"];
+  "StatusIndicator" -> "StatusIndicator" [label="status\ni18n", fontcolor="#555555"];
+  "ABTestCreate" -> "ABTestCreateDashboard" [label="pageState\nsetCurrentTab\ni18n\ncreateButtonEnabled\nsetIsUploadModalShown\n+1 more", fontcolor="#555555"];
+  "ABTestCreateDashboard" -> "Tabs" [label="activeKey\nonNavigate", fontcolor="#555555"];
+  "ABTestCreateDashboard" -> "Tab" [label="itemKey\ntitle", fontcolor="#555555"];
+  "ABTestCreateDashboard" -> "ABTestVariantImageGrid" [label="images\nsetIsUploadModalShown\ni18n", fontcolor="#555555"];
+  "ABTestVariantImageGrid" -> "ABTestCreateImageUpload" [label="key\nimageUrl\nuploadedImageWidth\nuploadedImageHeight\ndisplayedImageWidth\n+4 more", fontcolor="#555555"];
+  "ABTestCreate" -> "Modal" [label="show\nonHide\nsize", fontcolor="#555555"];
+  "ABTestCreate" -> "ABTestFileUpload" [label="i18n\nsetIsUploadModalShown\nsetImageUrl\nsetImageBase64", fontcolor="#555555"];
+  "ABTestFileUpload" -> "FileUploader" [label="i18n\nmultiple\nhandleUpload\naccept", fontcolor="#555555"];
+
+  // Legend
+  subgraph cluster_legend {
+    label="Legend";
+    fontsize=10;
+    color="#CCCCCC";
+    style="rounded";
+    fillcolor="#FFFFFF";
+    node [shape=box, fontsize=9, width=1.4, height=0.3];
+    subgraph cluster_node_legend {
+      label="Node Types";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      leg_redux [label="Redux connected", fillcolor="#E8F5E9", color="#4CAF50", style="rounded,filled"];
+      leg_state [label="Stateful", fillcolor="#E3F2FD", color="#2196F3", style="rounded,filled"];
+      leg_less [label="Stateless", fillcolor="#FAFAFA", color="#9E9E9E", style="rounded,filled"];
+      leg_ext [label="Unresolved", fillcolor="#F5F5F5", color="#CCCCCC", style="rounded,filled,dashed"];
+      leg_redux -> leg_state -> leg_less -> leg_ext [style=invis];
+    }
+    subgraph cluster_file_legend {
+      label="Cluster Types";
+      fontsize=9;
+      style="rounded";
+      color="#DDDDDD";
+      fleg_comp [label="Components", fillcolor="#E3F2FD", color="#1976D2", style="rounded,filled"];
+      fleg_redux [label="Reducers", fillcolor="#F3E5F5", color="#7B1FA2", style="rounded,filled"];
+      fleg_action [label="Actions", fillcolor="#FFF3E0", color="#F57C00", style="rounded,filled"];
+      fleg_const [label="Constants", fillcolor="#E8F5E9", color="#388E3C", style="rounded,filled"];
+      fleg_util [label="Utils", fillcolor="#FFF8E1", color="#FBC02D", style="rounded,filled"];
+      fleg_ext [label="External", fillcolor="#ECEFF1", color="#607D8B", style="rounded,filled"];
+      fleg_comp -> fleg_redux -> fleg_action -> fleg_const -> fleg_util -> fleg_ext [style=invis];
+    }
+    edge_leg [shape=none, label="Edge styles:\n━━━ JSX child\n┄┄┄ Import only\n\nProp types:\n●prop = state prop\nƒprop = function prop", fontsize=8];
+  }
+}
