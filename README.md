@@ -1,6 +1,6 @@
 # react-ast-parser
 
-A CLI tool that automatically extracts React component dependencies and generates **visual dependency graphs** using Babel AST parsing and Graphviz.
+A CLI that maps React component dependencies from the Babel AST and draws them as Graphviz graphs.
 
 **Quickly understand component hierarchies, state flow, and Redux connections without manual documentation.**
 
