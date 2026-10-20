@@ -120,6 +120,9 @@ react-ast-parser ./src/App.jsx --graph-only
 
 # Output only JSON data (skip graph generation)
 react-ast-parser ./src/App.jsx --json-only
+
+# Also write graph.cypher, a Cypher script for Neo4j (see "Graph database export")
+react-ast-parser ./src/App.jsx --cypher
 ```
 
 ### Example Output
@@ -180,6 +183,56 @@ Component Data (JSON):
 ```
 
 ---
+
+## Graph database export
+
+`--cypher` writes `graph.cypher` into the working directory, next to `graph.dot`,
+in addition to whatever `--json-only` or `--graph-only` select. With `--quiet`
+it prints nothing new; otherwise it prints `✓ Generated graph.cypher`. The file
+is a plain Cypher script (Neo4j 5 syntax). The tool needs no Neo4j driver and no
+running server.
+
+| Kind | Label or type | Properties |
+| --- | --- | --- |
+| Node | `Component` | `name`, `file` (relative to the directory of the analyzed file, forward slashes; absent for a child that never resolved), `parseError` (boolean), `state` (list; omitted when none) |
+| Node | `StoreKey` | `name`, one per Redux prop key |
+| Node | `Action` | `name`, one per action name |
+| Relationship | `(Component)-[:RENDERS]->(Component)` | `props` (list, may be empty) |
+| Relationship | `(Component)-[:SELECTS]->(StoreKey)` | none |
+| Relationship | `(Component)-[:DISPATCHES]->(Action)` | none |
+
+The script creates a uniqueness constraint on `name` for each label
+(`IF NOT EXISTS`), then uses `MERGE` for every node and relationship, so loading
+it twice gives the same graph. Output is sorted and byte-identical for the same input.
+
+Loading the script again for the same input gives the same graph. The script
+only adds and updates (it is `MERGE`-only), so components, edges and properties
+that you have since removed from the source **persist** after a re-load. The one
+exception is a property of a node that still exists: when a Component's `state`
+is null or its `file` is absent, its statement ends in `REMOVE n.state` or
+`REMOVE n.file`, so a re-load clears a stale value. To mirror a changed
+codebase exactly, clear the database before loading (for example
+`MATCH (n) DETACH DELETE n;`, or start from an empty database).
+
+Load it with:
+
+```bash
+cypher-shell -u <user> -p <password> -f graph.cypher
+```
+
+or paste it into Neo4j Browser. For example, the components that select the
+store key `user`:
+
+```cypher
+MATCH (c:Component)-[:SELECTS]->(:StoreKey {name: 'user'}) RETURN c.name, c.file;
+```
+
+**Known limit:** a Component is keyed by `name`, the same key the DOT output
+uses. Two components with the same name in different files merge into one node
+(the first one found supplies `file` and `state`).
+
+The tests check the generated script's text and shape. It has not been run
+against a live Neo4j.
 
 ## How It Works
 

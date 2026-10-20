@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const parseComponentForStateAndRedux = require('./parseReactComponents');
 const generateGraph = require('./generateGraph');
+const { writeCypher } = require('./generateCypher');
 
 function logTree(componentData, depth = 0) {
   const prefix = '  '.repeat(depth);
@@ -151,6 +152,7 @@ function parseArgs() {
     filePath: null,
     debug: false,
     quiet: false,
+    cypher: false,
     outputFormat: 'both', // 'both', 'json', 'graph'
   };
 
@@ -159,6 +161,8 @@ function parseArgs() {
       config.debug = true;
     } else if (args[i] === '--quiet') {
       config.quiet = true;
+    } else if (args[i] === '--cypher') {
+      config.cypher = true;
     } else if (args[i] === '--json-only') {
       config.outputFormat = 'json';
     } else if (args[i] === '--graph-only') {
@@ -180,6 +184,7 @@ Options:
   --quiet          Suppress console output during analysis
   --json-only      Output only JSON, skip graph generation
   --graph-only     Generate only the graph, skip JSON output
+  --cypher         Also write graph.cypher, a Cypher script for Neo4j
 
 Examples:
   node main.js ./src/components/App.jsx
@@ -230,4 +235,8 @@ if (config.outputFormat === 'graph' || config.outputFormat === 'both') {
     console.log('\nGenerating graph...');
   }
   generateGraph(allComponents, config.quiet);
+}
+
+if (config.cypher) {
+  writeCypher(allComponents, config.quiet);
 }
