@@ -31,6 +31,19 @@ test('--json-only --quiet prints exactly the JSON document on stdout', (t) => {
   assert.equal(JSON.parse(result.stdout).components.length, 4);
 });
 
+test('--quiet alone prints exactly the JSON document on stdout', (t) => {
+  const result = runCli(t, [fixture('tree', 'App.jsx'), '--quiet']);
+  assert.equal(result.status, 0);
+  assert.equal(JSON.parse(result.stdout).components.length, 4);
+});
+
+test('--graph-only --quiet prints nothing on stdout and writes graph.dot', (t) => {
+  const result = runCli(t, [fixture('tree', 'App.jsx'), '--graph-only', '--quiet']);
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, '');
+  assert.equal(require('node:fs').existsSync(path.join(result.cwd, 'graph.dot')), true);
+});
+
 test('without --quiet the tree and headings are still printed', (t) => {
   const result = runCli(t, [fixture('tree', 'App.jsx'), '--json-only']);
   assert.ok(result.stdout.startsWith('Analyzing component structure...\n'));

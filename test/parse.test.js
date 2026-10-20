@@ -126,6 +126,33 @@ test('connect with mapState passed by name resolves a function declaration, even
   assert.deepEqual(result.reduxProps, ['a', 'b']);
 });
 
+test('connect mapState with returns inside if/else, switch and try collects every returned object', () => {
+  const mixed = parse('connect(s => { if (s.a) { return { a: 1 }; } return { b: 2 }; })(App);');
+  assert.deepEqual(mixed.reduxProps, ['a', 'b']);
+  const nested = parse('connect(s => { if (s.a) { return { a: 1, c: 3 }; } else { return { b: 2, a: 4 }; } })(App);');
+  assert.deepEqual(nested.reduxProps, ['a', 'c', 'b']);
+  const other = parse(
+    'connect(function (s) { switch (s.k) { case 1: return { x: 1 }; default: try { return { y: 2 }; } catch (e) { return { z: 3 }; } } })(App);'
+  );
+  assert.deepEqual(other.reduxProps, ['x', 'y', 'z']);
+});
+
+test('connect mapDispatch with nested returns collects every returned object', () => {
+  const result = parse('connect(null, d => { if (d) { return { a: 1 }; } return { b: 2 }; })(App);');
+  assert.deepEqual(result.actions, ['a', 'b']);
+});
+
+test('a return inside a nested function is not counted', () => {
+  const result = parse(
+    'connect(s => { const pick = k => { return { inner: k }; }; function h() { return { inner2: 1 }; } return { outer: pick(s) }; })(App);'
+  );
+  assert.deepEqual(result.reduxProps, ['outer']);
+  assert.deepEqual(
+    parse('connect(s => { const f = () => { return { inner: 1 }; }; return f(); })(App);').reduxProps,
+    []
+  );
+});
+
 test('connect with an unresolvable mapState identifier records nothing', () => {
   const result = parse('import { mapState } from "./sel";\nfunction App() {}\nexport default connect(mapState)(App);');
   assert.deepEqual(result.reduxProps, []);

@@ -24,17 +24,34 @@ function resolveFunction(arg, scope) {
 const objectKeys = objectExpression =>
   objectExpression.properties.filter(prop => prop.key?.name).map(prop => prop.key.name);
 
-// Keys of the object a function returns, from a block body or a concise arrow body
-function returnedKeys(fn) {
-  let keys = [];
-  const body = fn.body.body || [fn.body];
-  body.forEach(statement => {
-    const returned = statement.type === 'ReturnStatement' ? statement.argument : statement;
-    if (returned?.type === 'ObjectExpression') {
-      keys = objectKeys(returned);
-    }
+const NESTED_FUNCTION_TYPES = [
+  'FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression',
+  'ObjectMethod', 'ClassMethod', 'ClassPrivateMethod',
+];
+
+// Collect every ObjectExpression returned in a function body, not descending into nested functions
+function collectReturnedObjects(node, found) {
+  if (!node || typeof node.type !== 'string') return;
+  if (NESTED_FUNCTION_TYPES.includes(node.type)) return;
+  if (node.type === 'ReturnStatement') {
+    if (node.argument?.type === 'ObjectExpression') found.push(node.argument);
+    return;
+  }
+  Object.values(node).forEach(value => {
+    if (Array.isArray(value)) value.forEach(child => collectReturnedObjects(child, found));
+    else if (value && typeof value === 'object') collectReturnedObjects(value, found);
   });
-  return keys;
+}
+
+// Union of the keys of every object a function returns (first-seen order), from a block body or a concise arrow body
+function returnedKeys(fn) {
+  const objects = [];
+  if (fn.body.type === 'BlockStatement') {
+    fn.body.body.forEach(statement => collectReturnedObjects(statement, objects));
+  } else if (fn.body.type === 'ObjectExpression') {
+    objects.push(fn.body);
+  }
+  return [...new Set(objects.flatMap(objectKeys))];
 }
 
 function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePath = '') {
