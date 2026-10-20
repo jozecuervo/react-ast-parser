@@ -134,7 +134,7 @@ function generateGraph(data, quiet = false) {
     console.error(
       `✗ Graphviz is not installed. Install it to generate SVG output:\n  macOS: brew install graphviz\n  Linux: sudo apt-get install graphviz\n  Windows: choco install graphviz`
     );
-    console.log(`\n✓ DOT file saved to ${dotFile} - you can manually convert it using: dot -Tsvg ${dotFile} -o graph.svg`);
+    if (!quiet) console.log(`\n✓ DOT file saved to ${dotFile} - you can manually convert it using: dot -Tsvg ${dotFile} -o graph.svg`);
     return false;
   }
 

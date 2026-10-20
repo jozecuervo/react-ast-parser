@@ -72,7 +72,9 @@ function analyzeComponent(
   depth = 0,
   globalData = { components: [] },
   visitedFiles = new Set(),
-  debug = false
+  debug = false,
+  quiet = false,
+  referencedName = null
 ) {
   // Prevent circular imports
   const absolutePath = path.resolve(filePath);
@@ -102,12 +104,14 @@ function analyzeComponent(
     // Handle parsing errors gracefully
     if (componentData.error) {
       console.warn(`⚠️  Parse error in ${path.basename(absolutePath)}: ${componentData.error}`);
+      // Name the failed record for the component the parent referenced, so the parent's edge lands on it
+      if (referencedName) componentData.name = referencedName;
       globalData.components.push(componentData);
       return globalData;
     }
 
     // Log the ASCII tree representation
-    logTree(componentData, depth);
+    if (!quiet) logTree(componentData, depth);
 
     // Add component data to the global structure
     globalData.components.push(componentData);
@@ -119,7 +123,7 @@ function analyzeComponent(
         if (debug) console.debug(`Processing child: ${child}`);
         const childPath = resolveImportPath(componentData.importMap, child, basePath, debug);
         if (childPath) {
-          analyzeComponent(childPath, depth + 1, globalData, visitedFiles, debug);
+          analyzeComponent(childPath, depth + 1, globalData, visitedFiles, debug, quiet, child);
         } else {
           const suggestions = Object.entries(componentData.importMap)
             .map(([name, imp]) => `${name} -> ${imp}`)
@@ -206,7 +210,7 @@ if (!config.quiet && config.outputFormat !== 'graph') {
   console.log('Analyzing component structure...\n');
 }
 
-const allComponents = analyzeComponent(componentFilePath, 0, { components: [] }, new Set(), config.debug);
+const allComponents = analyzeComponent(componentFilePath, 0, { components: [] }, new Set(), config.debug, config.quiet);
 
 if (!config.quiet && config.outputFormat !== 'graph') {
   console.log('\n' + '='.repeat(50));

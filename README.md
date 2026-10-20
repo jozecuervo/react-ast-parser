@@ -308,6 +308,7 @@ PostCard
 - Import statements (ES6 modules)
 - React hooks (useState, useReducer, useSelector, useDispatch)
 - Redux connect() and Redux hooks
+- `connect()` mapState and mapDispatch given inline (function or arrow) or by name when declared in the same file; mapDispatch also as an object
 - Basic TypeScript (.tsx files)
 
 ❌ **Not Supported:**
@@ -362,6 +363,10 @@ If you get "Error parsing file", ensure TypeScript files are syntactically valid
 ```bash
 npm test
 ```
+
+The suite uses Node's built-in `node:test` runner, so it needs Node 18 or newer
+(`.nvmrc` pins the current LTS) and no extra dependencies. It does not need
+Graphviz: it checks `graph.dot` and never renders the SVG.
 
 ### Making Changes
 1. Edit the relevant file (main.js, parseReactComponents.js, generateGraph.js)

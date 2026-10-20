@@ -13,7 +13,7 @@ hierarchy, state, and Redux connections).
 ```bash
 npm install
 node main.js ./path/to/component.jsx   # analyze a component, generates graph.svg + JSON
-npm test                                # not implemented: exits 1 with "no test specified"
+npm test                                # node:test suite in test/ (Node 18+); needs no Graphviz
 ```
 
 Useful flags: `--debug`, `--quiet`, `--graph-only`, `--json-only`. Graphviz
