@@ -1,0 +1,83 @@
+{
+  "components": [
+    {
+      "name": "App",
+      "state": [
+        "filter",
+        "showDone"
+      ],
+      "reduxProps": [
+        "user",
+        "theme"
+      ],
+      "actions": [],
+      "children": [
+        "TodoList",
+        "Counter"
+      ],
+      "props": {
+        "TodoList": [
+          "filter",
+          "onSelect"
+        ],
+        "Counter": [
+          "...spread"
+        ]
+      },
+      "importMap": {
+        "React": "react",
+        "connect": "react-redux",
+        "TodoList": "./components/TodoList",
+        "Counter": "./Counter"
+      },
+      "filePath": "tree/App.jsx"
+    },
+    {
+      "name": "TodoList",
+      "state": null,
+      "reduxProps": [],
+      "actions": [],
+      "children": [
+        "TodoItem"
+      ],
+      "props": {
+        "TodoItem": [
+          "key",
+          "item"
+        ]
+      },
+      "importMap": {
+        "React": "react",
+        "TodoItem": "./TodoItem"
+      },
+      "filePath": "tree/components/TodoList.jsx"
+    },
+    {
+      "name": "TodoItem",
+      "state": null,
+      "reduxProps": [],
+      "actions": [],
+      "children": [],
+      "props": {},
+      "importMap": {
+        "React": "react"
+      },
+      "filePath": "tree/components/TodoItem.jsx"
+    },
+    {
+      "name": "Counter",
+      "state": [
+        "Hook: useState"
+      ],
+      "reduxProps": [],
+      "actions": [],
+      "children": [],
+      "props": {},
+      "importMap": {
+        "React": "react",
+        "useState": "react"
+      },
+      "filePath": "tree/Counter.jsx"
+    }
+  ]
+}

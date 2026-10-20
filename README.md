@@ -363,6 +363,10 @@ If you get "Error parsing file", ensure TypeScript files are syntactically valid
 npm test
 ```
 
+The suite uses Node's built-in `node:test` runner, so it needs Node 18 or newer
+(`.nvmrc` pins the current LTS) and no extra dependencies. It does not need
+Graphviz: it checks `graph.dot` and never renders the SVG.
+
 ### Making Changes
 1. Edit the relevant file (main.js, parseReactComponents.js, generateGraph.js)
 2. Test with a sample component:
