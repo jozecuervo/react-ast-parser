@@ -10,14 +10,14 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { fixture, runCli, extractJson, normalizePaths } = require('./helpers');
+const { fixture, runCli, normalizePaths } = require('./helpers');
 
 const GOLDEN = fixture('tree.expected.json');
 
 test('full JSON for the tree fixture matches the golden file', (t) => {
   const result = runCli(t, [fixture('tree', 'App.jsx'), '--json-only', '--quiet']);
   assert.equal(result.status, 0);
-  const actual = normalizePaths(extractJson(result.stdout));
+  const actual = normalizePaths(JSON.parse(result.stdout));
 
   if (process.env.UPDATE_GOLDEN) {
     fs.writeFileSync(GOLDEN, JSON.stringify(actual, null, 2) + '\n');

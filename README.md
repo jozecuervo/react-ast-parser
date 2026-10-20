@@ -308,6 +308,7 @@ PostCard
 - Import statements (ES6 modules)
 - React hooks (useState, useReducer, useSelector, useDispatch)
 - Redux connect() and Redux hooks
+- `connect()` mapState and mapDispatch given inline (function or arrow) or by name when declared in the same file; mapDispatch also as an object
 - Basic TypeScript (.tsx files)
 
 ❌ **Not Supported:**

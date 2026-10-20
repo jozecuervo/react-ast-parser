@@ -36,8 +36,9 @@ function runCli(t, args) {
   return { ...result, cwd };
 }
 
-// The CLI prints the component tree to stdout even with --quiet, so stdout is
-// not pure JSON. The JSON document starts at the first line that is exactly "{".
+// Without --quiet the CLI prints the component tree and headings before the
+// JSON, so stdout is not pure JSON. The document starts at the first line that
+// is exactly "{". (With --json-only --quiet, plain JSON.parse(stdout) works.)
 function extractJson(stdout) {
   const start = stdout.startsWith('{\n') ? 0 : stdout.indexOf('\n{\n') + 1;
   if (start === 0 && !stdout.startsWith('{\n')) {

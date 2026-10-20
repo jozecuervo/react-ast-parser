@@ -10,7 +10,9 @@
         "user",
         "theme"
       ],
-      "actions": [],
+      "actions": [
+        "addTodo"
+      ],
       "children": [
         "TodoList",
         "Counter"

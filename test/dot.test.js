@@ -43,7 +43,7 @@ test('graph.dot declares one node per component, in traversal order', (t) => {
 
 test('graph.dot has one edge per parent -> child, with merged props as the label', (t) => {
   const dot = dotFor(t, ['tree', 'App.jsx']);
-  const componentEdges = edges(dot).filter((e) => e.from !== 'Redux Store');
+  const componentEdges = edges(dot).filter((e) => e.from !== 'Redux Store' && e.to !== 'Redux Store');
   assert.deepEqual(componentEdges, [
     { from: 'App', to: 'TodoList', label: 'Props:\\n filter\\nonSelect' },
     { from: 'App', to: 'Counter', label: 'Props:\\n ...spread' },
@@ -69,11 +69,10 @@ test('graph.dot shows state text in the node label', (t) => {
 
 test('graph.dot colours a parse-error node and truncates its message', (t) => {
   const dot = dotFor(t, ['broken', 'App.jsx']);
-  assert.deepEqual(nodes(dot), ['App', 'ParseError']);
+  assert.deepEqual(nodes(dot), ['App', 'Oops']);
   assert.match(dot, /BGCOLOR="#FFB3BA"/);
   assert.match(dot, /State: Error: Unterminated JSX contents\. \(4:\.\.\./);
-  // BUG? The parent's edge points at "Oops", but the node is declared as
-  // "ParseError", so the DOT draws a second, unstyled "Oops" node.
+  // The parent's edge lands on the failed record's own node.
   assert.deepEqual(
     edges(dot).map((e) => `${e.from}->${e.to}`),
     ['App->Oops']

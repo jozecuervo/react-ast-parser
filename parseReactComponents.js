@@ -1,5 +1,41 @@
 const parser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
+const nodePath = require('path');
+
+// Name for a component that has no identifier: the file's basename without
+// extension, or its directory's name when the file is index.*
+function nameFromFilePath(filePath) {
+  if (!filePath) return '';
+  const base = nodePath.basename(filePath, nodePath.extname(filePath));
+  return base === 'index' ? nodePath.basename(nodePath.dirname(filePath)) : base;
+}
+
+const isFunctionNode = node =>
+  node?.type === 'FunctionExpression' || node?.type === 'ArrowFunctionExpression' || node?.type === 'FunctionDeclaration';
+
+// A function or arrow, or an identifier that resolves to one declared in this file
+function resolveFunction(arg, scope) {
+  if (arg?.type !== 'Identifier') return isFunctionNode(arg) ? arg : null;
+  const declaration = scope.getBinding(arg.name)?.path.node;
+  const fn = declaration?.type === 'VariableDeclarator' ? declaration.init : declaration;
+  return isFunctionNode(fn) ? fn : null;
+}
+
+const objectKeys = objectExpression =>
+  objectExpression.properties.filter(prop => prop.key?.name).map(prop => prop.key.name);
+
+// Keys of the object a function returns, from a block body or a concise arrow body
+function returnedKeys(fn) {
+  let keys = [];
+  const body = fn.body.body || [fn.body];
+  body.forEach(statement => {
+    const returned = statement.type === 'ReturnStatement' ? statement.argument : statement;
+    if (returned?.type === 'ObjectExpression') {
+      keys = objectKeys(returned);
+    }
+  });
+  return keys;
+}
 
 function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePath = '') {
   try {
@@ -23,7 +59,7 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
       // Handle class components
       ClassDeclaration(path) {
         if (!componentName) {
-          componentName = path.node.id.name;
+          componentName = path.node.id ? path.node.id.name : nameFromFilePath(filePath);
         }
       },
       ClassProperty(path) {
@@ -59,16 +95,18 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
         if (callee.type === 'Identifier') {
           // Redux connect handling
           if (callee.name === 'connect') {
-            const mapStateToProps = path.node.arguments[0];
-            if (mapStateToProps?.type === 'FunctionExpression' || mapStateToProps?.type === 'ArrowFunctionExpression') {
-              const body = mapStateToProps.body.body || [mapStateToProps.body];
-              body.forEach(statement => {
-                if (statement.type === 'ReturnStatement' && statement.argument?.type === 'ObjectExpression') {
-                  reduxProps = statement.argument.properties
-                    .filter(prop => prop.key?.name)
-                    .map(prop => prop.key.name);
-                }
-              });
+            const mapStateToProps = resolveFunction(path.node.arguments[0], path.scope);
+            if (mapStateToProps) {
+              reduxProps = returnedKeys(mapStateToProps);
+            }
+            const mapDispatchToProps = path.node.arguments[1];
+            if (mapDispatchToProps?.type === 'ObjectExpression') {
+              actions = objectKeys(mapDispatchToProps);
+            } else {
+              const mapDispatch = resolveFunction(mapDispatchToProps, path.scope);
+              if (mapDispatch) {
+                actions = returnedKeys(mapDispatch);
+              }
             }
           }
           // React hooks for state

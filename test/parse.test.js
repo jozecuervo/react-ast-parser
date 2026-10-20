@@ -107,28 +107,54 @@ test('connect with an arrow mapState and a block body lists the returned keys', 
   assert.deepEqual(result.reduxProps, ['user']);
 });
 
-test('connect with an implicit-return arrow mapState finds nothing', () => {
-  // BUG? `state => ({ user: state.user })` is the most common mapState shape.
-  const result = parse('function App() {}\nexport default connect(state => ({ user: state.user }))(App);');
-  assert.deepEqual(result.reduxProps, []);
+test('connect with an implicit-return arrow mapState records the object keys', () => {
+  const result = parse('function App() {}\nexport default connect(state => ({ user: state.user, theme: state.theme }))(App);');
+  assert.deepEqual(result.reduxProps, ['user', 'theme']);
 });
 
-test('connect with mapState passed by name finds nothing', () => {
-  // BUG? The README's Dashboard example uses this shape and promises redux props.
+test('connect with mapState passed by name resolves an arrow declared in the file', () => {
   const result = parse(
     'function App() {}\nconst mapStateToProps = state => { return { user: state.user }; };\nexport default connect(mapStateToProps)(App);'
   );
+  assert.deepEqual(result.reduxProps, ['user']);
+});
+
+test('connect with mapState passed by name resolves a function declaration, even one declared later', () => {
+  const result = parse(
+    'function App() {}\nexport default connect(mapState)(App);\nfunction mapState(state) { return { a: state.a, b: state.b }; }'
+  );
+  assert.deepEqual(result.reduxProps, ['a', 'b']);
+});
+
+test('connect with an unresolvable mapState identifier records nothing', () => {
+  const result = parse('import { mapState } from "./sel";\nfunction App() {}\nexport default connect(mapState)(App);');
+  assert.deepEqual(result.reduxProps, []);
+  assert.deepEqual(parse('connect(missing)(App);').reduxProps, []);
+});
+
+test('connect mapDispatch as an object records shorthand and renamed action keys', () => {
+  const result = parse('function App() {}\nexport default connect(null, { addTodo, remove: removeTodo })(App);');
+  assert.deepEqual(result.actions, ['addTodo', 'remove']);
   assert.deepEqual(result.reduxProps, []);
 });
 
-test('connect mapDispatch is ignored: actions is always empty', () => {
-  // BUG? generateGraph draws edges for `actions`, but the parser never fills it.
-  const result = parse(
-    'function App() {}\nexport default connect(null, { addTodo, removeTodo })(App);\n' +
-      'const x = connect(null, dispatch => ({ add: () => dispatch({ type: "ADD" }) }));'
+test('connect mapDispatch as a function or arrow returning an object records its keys', () => {
+  assert.deepEqual(
+    parse('connect(null, dispatch => ({ add: () => dispatch({ type: "ADD" }) }))(App);').actions,
+    ['add']
   );
-  assert.deepEqual(result.actions, []);
-  assert.deepEqual(result.reduxProps, []);
+  assert.deepEqual(
+    parse('connect(null, function (dispatch) { return { add: 1, del: 2 }; })(App);').actions,
+    ['add', 'del']
+  );
+});
+
+test('connect mapDispatch passed by name resolves a function declared in the file', () => {
+  const result = parse(
+    'const mapDispatch = dispatch => ({ save: () => dispatch({ type: "S" }) });\nconnect(null, mapDispatch)(App);'
+  );
+  assert.deepEqual(result.actions, ['save']);
+  assert.deepEqual(parse('import { md } from "./x";\nconnect(null, md)(App);').actions, []);
 });
 
 test('useSelector and useDispatch are recorded as hook labels, once per call', () => {
@@ -211,10 +237,16 @@ test('a file that fails to parse returns a ParseError record', (t) => {
   assert.equal(errors.mock.callCount(), 1);
 });
 
-test('an anonymous default-exported class is reported as a ParseError', (t) => {
-  // BUG? Valid code is rejected: the visitor reads `node.id.name` on a class
-  // with no id, throws, and the generic catch turns it into a parse error.
-  const { result } = parseQuietly(t, 'export default class extends React.Component { render() { return <div />; } }');
-  assert.equal(result.name, 'ParseError');
-  assert.match(result.error, /Cannot read properties of null/);
+test('an anonymous default-exported class is named after the file basename', (t) => {
+  const source = 'export default class extends React.Component { render() { return <div />; } }';
+  const { result, errors } = parseQuietly(t, source);
+  assert.equal(result.name, 'Fixture');
+  assert.equal(result.error, undefined);
+  assert.equal(errors.mock.callCount(), 0);
+});
+
+test('an anonymous default-exported class in an index file is named after its directory', () => {
+  const source = 'export default class extends React.Component {}';
+  assert.equal(parseComponent(source, [], '/src/Widget/index.js').name, 'Widget');
+  assert.equal(parseComponent(source, [], '/src/Panel.tsx').name, 'Panel');
 });
