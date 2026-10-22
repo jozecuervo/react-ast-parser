@@ -77,15 +77,17 @@ choco install graphviz
 
 ### Install react-ast-parser
 
-```bash
-npm install -g react-ast-parser
-```
+The package is not published to npm. Install it from a clone:
 
-Or clone and run locally:
 ```bash
 git clone https://github.com/jose-m-hernandez/react-ast-parser.git
 cd react-ast-parser
 npm install
+npm install -g .
+```
+
+Or run it from the clone without installing:
+```bash
 node main.js ./path/to/component.jsx
 ```
 
