@@ -83,7 +83,7 @@ npm install -g react-ast-parser
 
 Or clone and run locally:
 ```bash
-git clone https://github.com/jozecuervo/react-ast-parser.git
+git clone https://github.com/jose-m-hernandez/react-ast-parser.git
 cd react-ast-parser
 npm install
 node main.js ./path/to/component.jsx
