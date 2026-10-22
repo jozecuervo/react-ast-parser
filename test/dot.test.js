@@ -9,10 +9,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { fixture, runCli } = require('./helpers');
 
-function dotFor(t, fixtureParts) {
+function dotFor(t, fixtureParts, expectedStatus = 0) {
   const result = runCli(t, [fixture(...fixtureParts), '--graph-only', '--quiet']);
   const dotPath = path.join(result.cwd, 'graph.dot');
-  assert.equal(result.status, 0);
+  assert.equal(result.status, expectedStatus);
   assert.ok(fs.existsSync(dotPath), 'graph.dot should be written to the cwd');
   return fs.readFileSync(dotPath, 'utf8');
 }
@@ -63,12 +63,12 @@ test('graph.dot draws a Redux Store edge per redux prop', (t) => {
 test('graph.dot shows state text in the node label', (t) => {
   const dot = dotFor(t, ['tree', 'App.jsx']);
   assert.match(dot, /State: filter, showDone/);
-  assert.match(dot, /State: Hook: useState/);
+  assert.match(dot, /State: count/);
   assert.match(dot, /State: None/);
 });
 
 test('graph.dot colours a parse-error node and truncates its message', (t) => {
-  const dot = dotFor(t, ['broken', 'App.jsx']);
+  const dot = dotFor(t, ['broken', 'App.jsx'], 2);
   assert.deepEqual(nodes(dot), ['App', 'Oops']);
   assert.match(dot, /BGCOLOR="#FFB3BA"/);
   assert.match(dot, /State: Error: Unterminated JSX contents\. \(4:\.\.\./);

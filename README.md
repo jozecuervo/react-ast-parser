@@ -108,6 +108,8 @@ This will:
 4. Generate `graph.svg` with the dependency visualization
 5. Output component metadata as JSON
 
+Exit status: 0 on success; 1 for a usage error or a missing input file; 2 when any file failed to parse (all output is still written).
+
 ### Command-Line Options
 
 ```bash
@@ -359,7 +361,7 @@ PostCard
 
 ⚠️ **Supported:**
 - React class components and functional components
-- JSX with component references
+- JSX with component references, including `<Namespace.Component />` elements resolved through the namespace import
 - Import statements (ES6 modules)
 - React hooks (useState, useReducer, useSelector, useDispatch)
 - Redux connect() and Redux hooks

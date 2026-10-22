@@ -51,11 +51,13 @@ test('anonymous default-exported function falls back to Unknown', () => {
   assert.equal(parse('export default function () { return <div />; }').name, 'Unknown');
 });
 
-test('the first declaration wins the name', () => {
-  // BUG? A helper declared before the component names the whole file, and a
-  // concise-bodied arrow helper (e.g. mapState) does too.
-  assert.equal(parse('function helper() {}\nfunction App() { return <div />; }').name, 'helper');
-  assert.equal(parse('const mapState = s => ({ a: s.a });\nfunction App() {}').name, 'mapState');
+test('the first capitalised declaration names the file, ahead of lowercase helpers', () => {
+  assert.equal(parse('function helper() {}\nfunction App() { return <div />; }').name, 'App');
+  assert.equal(parse('const mapState = s => ({ a: s.a });\nfunction App() {}').name, 'App');
+});
+
+test('a file with only lowercase declarations is named after the first one', () => {
+  assert.equal(parse('function helper() {}\nconst x = () => 1;').name, 'helper');
 });
 
 test('class property state lists the keys of the object literal', () => {
@@ -72,22 +74,35 @@ test('static state is ignored', () => {
   assert.equal(parse('class Counter { static state = { a: 1 }; }').state, null);
 });
 
-test('this.state assigned in the constructor is not detected', () => {
-  // BUG? The README lists class state as supported, but only the class
-  // property form (`state = {...}`) is recognised.
+test('this.state assigned in the constructor lists the keys of the object literal', () => {
   const result = parse(
     'class Counter extends React.Component { constructor() { super(); this.state = { count: 0 }; } }'
   );
+  assert.deepEqual(result.state, ['count']);
+});
+
+test('this.state assigned a non-literal in the constructor is "Dynamic State"', () => {
+  const result = parse(
+    'class Counter extends React.Component { constructor() { super(); this.state = makeState(); } }'
+  );
+  assert.deepEqual(result.state, ['Dynamic State']);
+});
+
+test('this.state assigned outside the constructor is ignored', () => {
+  const result = parse('class Counter extends React.Component { reset() { this.state = { a: 1 }; } }');
   assert.equal(result.state, null);
 });
 
-test('useState and useReducer are recorded by hook name, once per call', () => {
-  // BUG? State entries carry no variable names, and repeated hooks repeat
-  // the same label.
+test('useState and useReducer are recorded by the first destructured variable name', () => {
   const result = parse(
     'function C() { const [a] = useState(1); const [b] = useState(2); const [c] = useReducer(f, 0); return <div />; }'
   );
-  assert.deepEqual(result.state, ['Hook: useState', 'Hook: useState', 'Hook: useReducer']);
+  assert.deepEqual(result.state, ['a', 'b', 'c']);
+});
+
+test('bare hook calls with no variable are labelled by hook name and de-duplicated', () => {
+  const result = parse('function C() { useState(0); useState(1); }');
+  assert.deepEqual(result.state, ['Hook: useState']);
 });
 
 test('hook state is appended after class property state', () => {
@@ -184,12 +199,36 @@ test('connect mapDispatch passed by name resolves a function declared in the fil
   assert.deepEqual(parse('import { md } from "./x";\nconnect(null, md)(App);').actions, []);
 });
 
-test('useSelector and useDispatch are recorded as hook labels, once per call', () => {
-  // BUG? These land in reduxProps as "Hook: ..." strings, not as store keys.
+test('useSelector records the store path it reads and useDispatch records nothing', () => {
   const result = parse(
     'function C() { const a = useSelector(s => s.a); const b = useSelector(s => s.b); const d = useDispatch(); }'
   );
-  assert.deepEqual(result.reduxProps, ['Hook: useSelector', 'Hook: useSelector', 'Hook: useDispatch']);
+  assert.deepEqual(result.reduxProps, ['a', 'b']);
+});
+
+test('useSelector with a nested member chain records the dotted path', () => {
+  assert.deepEqual(parse('function C() { useSelector(s => s.posts.items); }').reduxProps, ['posts.items']);
+});
+
+test('useSelector that is not a plain member chain records nothing', () => {
+  assert.deepEqual(parse('function C() { useSelector(s => s); }').reduxProps, []);
+  assert.deepEqual(parse('function C() { useSelector(s => s[k]); }').reduxProps, []);
+});
+
+test('useSelector whose member chain is rooted at another variable records nothing', () => {
+  assert.deepEqual(parse('function C() { useSelector(s => other.a); }').reduxProps, []);
+});
+
+test('useSelector given a same-file named selector resolves it', () => {
+  const result = parse('const selectUser = s => s.user;\nfunction C() { useSelector(selectUser); }');
+  assert.deepEqual(result.reduxProps, ['user']);
+});
+
+test('connect adds its keys to those from useSelector, without duplicates', () => {
+  const result = parse(
+    'function C() { useSelector(s => s.x); }\nconnect(s => ({ a: s.a, b: s.b }))(C);'
+  );
+  assert.deepEqual(result.reduxProps, ['x', 'a', 'b']);
 });
 
 test('default, named (aliased) and namespace imports populate importMap by local name', () => {
@@ -229,12 +268,16 @@ test('a child with no attributes gets an empty props list', () => {
   assert.deepEqual(parse('function App() { return <Kid />; }').props, { Kid: [] });
 });
 
-test('a member-expression element is recorded by its property name only', () => {
-  // BUG? <Mod.Inner /> is stored as "Inner", but importMap has "Mod", so the
-  // CLI can never resolve this child.
+test('a member-expression element is recorded by its full dotted name', () => {
   const result = parse('import * as Mod from "./m";\nfunction App() { return <Mod.Inner />; }');
-  assert.deepEqual(result.children, ['Inner']);
+  assert.deepEqual(result.children, ['Mod.Inner']);
   assert.deepEqual(result.importMap, { Mod: './m' });
+});
+
+test('a deeper member-expression element keeps every segment; lowercase last property is excluded', () => {
+  const result = parse('function App() { return <><A.B.C /><motion.div /></>; }');
+  assert.deepEqual(result.children, ['A.B.C']);
+  assert.deepEqual(result.props, { 'A.B.C': [] });
 });
 
 test('TypeScript syntax parses', () => {
