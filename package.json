@@ -19,8 +19,16 @@
     "component",
     "redux"
   ],
-  "author": "jozecuervo",
+  "author": "José M Hernandez",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jose-m-hernandez/react-ast-parser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jose-m-hernandez/react-ast-parser/issues"
+  },
+  "homepage": "https://github.com/jose-m-hernandez/react-ast-parser#readme",
   "engines": {
     "node": ">=14.0.0"
   },
