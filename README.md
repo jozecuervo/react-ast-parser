@@ -474,7 +474,7 @@ Issues and pull requests are welcome! Areas for improvement:
 
 ## License
 
-ISC
+ISC. See [LICENSE](LICENSE).
 
 ---
 
