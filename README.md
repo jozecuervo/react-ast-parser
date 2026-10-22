@@ -235,8 +235,16 @@ MATCH (c:Component)-[:SELECTS]->(:StoreKey {name: 'user'}) RETURN c.name, c.file
 uses. Two components with the same name in different files merge into one node
 (the first one found supplies `file` and `state`).
 
-The tests check the generated script's text and shape. It has not been run
-against a live Neo4j.
+The tests check the generated script's text and shape.
+
+### Live Neo4j check (opt-in)
+
+`test/neo4j.live.test.js` runs the script against a real Neo4j.
+It is skipped unless `NEO4J_URL` is set, so `npm test` makes no network call.
+Set `NEO4J_URL` (for example `http://localhost:7474`) and `NEO4J_PASSWORD`; `NEO4J_USER` (default `neo4j`) and `NEO4J_DATABASE` (default `neo4j`) are optional.
+It needs an empty database and refuses to run otherwise; afterwards it deletes every node and drops only the constraints it created.
+It loads the `tree` fixture's script twice, then checks node and relationship counts and sample queries, and that the second load changed nothing.
+It was run against Neo4j Community 2026.09.0 on a local machine on 2026-10-22.
 
 ## How It Works
 
