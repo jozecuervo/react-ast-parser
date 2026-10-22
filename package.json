@@ -19,7 +19,7 @@
     "component",
     "redux"
   ],
-  "author": "jozecuervo",
+  "author": "José M Hernandez",
   "license": "ISC",
   "engines": {
     "node": ">=14.0.0"
