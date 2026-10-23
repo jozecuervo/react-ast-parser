@@ -69,7 +69,7 @@
     {
       "name": "Counter",
       "state": [
-        "Hook: useState"
+        "count"
       ],
       "reduxProps": [],
       "actions": [],

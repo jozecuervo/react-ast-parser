@@ -78,14 +78,29 @@ test('a directory import resolves to its index file', (t) => {
   assert.ok(data.components[1].filePath.endsWith(path.join('Widget', 'index.js')));
 });
 
-test('a child that fails to parse keeps the name its parent used and the run succeeds', (t) => {
+test('a child that fails to parse keeps the name its parent used and the run exits 2', (t) => {
   const result = runCli(t, [fixture('broken', 'App.jsx'), '--json-only', '--quiet']);
-  // BUG? Exit status is 0 even though a file failed to parse.
-  assert.equal(result.status, 0);
+  assert.equal(result.status, 2);
   const data = JSON.parse(result.stdout);
   assert.deepEqual(names(data), ['App', 'Oops']);
   assert.match(data.components[1].error, /Unterminated JSX contents/);
   assert.match(result.stderr, /Parse error in Oops\.jsx/);
+});
+
+test('a root file that fails to parse exits 2 and still writes its JSON', (t) => {
+  const result = runCli(t, [fixture('broken', 'Oops.jsx'), '--json-only', '--quiet']);
+  assert.equal(result.status, 2);
+  const data = JSON.parse(result.stdout);
+  assert.equal(data.components.length, 1);
+});
+
+test('a namespace-imported member element resolves through the namespace import', (t) => {
+  const result = runCli(t, [fixture('member', 'App.jsx'), '--json-only', '--quiet']);
+  assert.equal(result.status, 0);
+  const data = JSON.parse(result.stdout);
+  assert.deepEqual(names(data), ['App', 'Inner']);
+  assert.deepEqual(data.components[0].children, ['Mod.Inner']);
+  assert.doesNotMatch(result.stderr, /Could not resolve/);
 });
 
 test('no file argument exits 1 with usage', (t) => {

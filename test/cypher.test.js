@@ -41,9 +41,9 @@ function unescape(raw) {
   return raw.replace(/\\(.)/g, (_, c) => ({ n: '\n', r: '\r', t: '\t' })[c] || c);
 }
 
-function cypherFor(t, fixtureName, extra = []) {
+function cypherFor(t, fixtureName, extra = [], expectedStatus = 0) {
   const result = runCli(t, [fixture(fixtureName, 'App.jsx'), '--cypher', '--quiet', '--json-only', ...extra]);
-  assert.equal(result.status, 0);
+  assert.equal(result.status, expectedStatus);
   return fs.readFileSync(path.join(result.cwd, 'graph.cypher'), 'utf8');
 }
 
@@ -108,7 +108,7 @@ test('script is idempotent in shape: no CREATE but constraints, every node is a 
 });
 
 test('a child that fails to parse is a Component with parseError true and the parent RENDERS it', (t) => {
-  const script = cypherFor(t, 'broken');
+  const script = cypherFor(t, 'broken', [], 2);
   assert.match(script, /^MERGE \(n:Component \{name: 'Oops'\}\) SET n\.file = 'Oops\.jsx', n\.parseError = true REMOVE n\.state;$/m);
   assert.match(script, /^MERGE \(n:Component \{name: 'App'\}\) SET n\.file = 'App\.jsx', n\.parseError = false REMOVE n\.state;$/m);
   assert.match(

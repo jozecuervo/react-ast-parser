@@ -54,6 +54,32 @@ function returnedKeys(fn) {
   return [...new Set(objects.flatMap(objectKeys))];
 }
 
+// Dotted path after the parameter for a selector like `s => s.posts.items`; '' when it is not a plain member chain
+function selectorPath(fn) {
+  const param = fn.params[0];
+  if (param?.type !== 'Identifier') return '';
+  let body = fn.body;
+  if (body.type === 'BlockStatement') {
+    body = body.body.length === 1 && body.body[0].type === 'ReturnStatement' ? body.body[0].argument : null;
+  }
+  const parts = [];
+  while (body?.type === 'MemberExpression' && !body.computed && body.property.type === 'Identifier') {
+    parts.unshift(body.property.name);
+    body = body.object;
+  }
+  return body?.type === 'Identifier' && body.name === param.name ? parts.join('.') : '';
+}
+
+// Dotted name of a JSX element name: Mod.Inner, A.B.C
+function jsxMemberName(node) {
+  if (node.type === 'JSXIdentifier') return node.name;
+  if (node.type === 'JSXMemberExpression') {
+    const object = jsxMemberName(node.object);
+    return object ? `${object}.${node.property.name}` : undefined;
+  }
+  return undefined;
+}
+
 function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePath = '') {
   try {
     const ast = parser.parse(fileContent, {
@@ -67,6 +93,7 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
     let reduxProps = [];
     let actions = [];
     let componentName = '';
+    let capitalisedName = ''; // first named declaration starting with A-Z; wins over componentName
     const childrenSet = new Set(); // Use Set to prevent duplicates
     let props = {};
     const importMap = {}; // Track import paths
@@ -77,6 +104,9 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
       ClassDeclaration(path) {
         if (!componentName) {
           componentName = path.node.id ? path.node.id.name : nameFromFilePath(filePath);
+        }
+        if (!capitalisedName && /^[A-Z]/.test(path.node.id?.name || '')) {
+          capitalisedName = path.node.id.name;
         }
       },
       ClassProperty(path) {
@@ -92,9 +122,25 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
       },
 
       // Handle functional components and arrow functions
+      AssignmentExpression(path) {
+        const { left, right, operator } = path.node;
+        if (
+          operator === '=' &&
+          left.type === 'MemberExpression' && !left.computed &&
+          left.object.type === 'ThisExpression' && left.property.name === 'state'
+        ) {
+          const method = path.getFunctionParent()?.node;
+          if (method?.type === 'ClassMethod' && method.kind === 'constructor') {
+            state = right.type === 'ObjectExpression' ? objectKeys(right) : ['Dynamic State'];
+          }
+        }
+      },
       FunctionDeclaration(path) {
         if (!componentName && path.node.id) {
           componentName = path.node.id.name;
+        }
+        if (!capitalisedName && /^[A-Z]/.test(path.node.id?.name || '')) {
+          capitalisedName = path.node.id.name;
         }
       },
       VariableDeclarator(path) {
@@ -102,6 +148,9 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
           if (path.node.id?.name) {
             componentName = path.node.id.name;
           }
+        }
+        if (!capitalisedName && path.node.init?.type === 'ArrowFunctionExpression' && /^[A-Z]/.test(path.node.id?.name || '')) {
+          capitalisedName = path.node.id.name;
         }
       },
 
@@ -114,7 +163,7 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
           if (callee.name === 'connect') {
             const mapStateToProps = resolveFunction(path.node.arguments[0], path.scope);
             if (mapStateToProps) {
-              reduxProps = returnedKeys(mapStateToProps);
+              reduxProps = [...new Set([...reduxProps, ...returnedKeys(mapStateToProps)])];
             }
             const mapDispatchToProps = path.node.arguments[1];
             if (mapDispatchToProps?.type === 'ObjectExpression') {
@@ -129,12 +178,16 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
           // React hooks for state
           else if (['useState', 'useReducer'].includes(callee.name)) {
             if (!hookState) hookState = [];
-            hookState.push(`Hook: ${callee.name}`);
+            const parent = path.parent;
+            const id = parent.type === 'VariableDeclarator' && parent.init === path.node ? parent.id : null;
+            const first = id?.type === 'ArrayPattern' ? id.elements[0] : null;
+            hookState.push(first?.type === 'Identifier' ? first.name : `Hook: ${callee.name}`);
           }
-          // Redux hooks
-          else if (['useSelector', 'useDispatch'].includes(callee.name)) {
-            if (!reduxProps) reduxProps = [];
-            reduxProps.push(`Hook: ${callee.name}`);
+          // Redux hooks: useSelector records the store path it reads; useDispatch records nothing
+          else if (callee.name === 'useSelector') {
+            const selector = resolveFunction(path.node.arguments[0], path.scope);
+            const selected = selector ? selectorPath(selector) : '';
+            if (selected) reduxProps = [...new Set([...reduxProps, selected])];
           }
         }
       },
@@ -161,11 +214,11 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
         }
         // Handle member expressions like <Module.Component />
         else if (elementName.type === 'JSXMemberExpression') {
-          childName = path.node.openingElement.name.property?.name;
+          childName = jsxMemberName(elementName);
         }
 
-        // Exclude standard HTML tags (lowercase)
-        if (!childName || /^[a-z]/.test(childName)) return;
+        // Exclude standard HTML tags (lowercase); a member expression is judged by its last property
+        if (!childName || /^[a-z]/.test(childName.slice(childName.lastIndexOf('.') + 1))) return;
 
         // Add to set to avoid duplicates
         childrenSet.add(childName);
@@ -198,10 +251,11 @@ function parseComponentForStateAndRedux(fileContent, componentHierarchy, filePat
     // Merge hookState into state if present
     if (hookState.length > 0) {
       state = state ? [...(Array.isArray(state) ? state : [state]), ...hookState] : hookState;
+      state = [...new Set(state)];
     }
 
     return {
-      name: componentName || 'Unknown',
+      name: capitalisedName || componentName || 'Unknown',
       state,
       reduxProps: reduxProps.length > 0 ? reduxProps : [],
       actions: actions.length > 0 ? actions : [],

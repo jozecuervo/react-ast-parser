@@ -21,12 +21,14 @@ function logTree(componentData, depth = 0) {
  * Handles: .js, .jsx, .tsx, .ts files and index files in directories
  */
 const resolveImportPath = (importMap, childName, basePath, debug = false) => {
-  if (!importMap[childName]) {
+  // <Mod.Inner /> is recorded as 'Mod.Inner'; the import is bound to 'Mod'
+  const importName = childName.includes('.') ? childName.split('.')[0] : childName;
+  if (!importMap[importName]) {
     if (debug) console.debug(`  [DEBUG] Child '${childName}' not found in importMap`);
     return null;
   }
 
-  const relativePath = importMap[childName];
+  const relativePath = importMap[importName];
 
   // Handle absolute or relative paths
   let resolvedPath;
@@ -239,4 +241,9 @@ if (config.outputFormat === 'graph' || config.outputFormat === 'both') {
 
 if (config.cypher) {
   writeCypher(allComponents, config.quiet);
+}
+
+// Exit 2: some file failed to parse (1 is a usage error or a missing input file). All output is already written.
+if (allComponents.components.some(component => component.error)) {
+  process.exitCode = 2;
 }

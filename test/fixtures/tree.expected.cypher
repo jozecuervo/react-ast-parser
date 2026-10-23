@@ -4,7 +4,7 @@ CREATE CONSTRAINT storekey_name IF NOT EXISTS FOR (n:StoreKey) REQUIRE n.name IS
 CREATE CONSTRAINT action_name IF NOT EXISTS FOR (n:Action) REQUIRE n.name IS UNIQUE;
 MERGE (n:Action {name: 'addTodo'});
 MERGE (n:Component {name: 'App'}) SET n.file = 'App.jsx', n.parseError = false, n.state = ['filter', 'showDone'];
-MERGE (n:Component {name: 'Counter'}) SET n.file = 'Counter.jsx', n.parseError = false, n.state = ['Hook: useState'];
+MERGE (n:Component {name: 'Counter'}) SET n.file = 'Counter.jsx', n.parseError = false, n.state = ['count'];
 MERGE (n:Component {name: 'TodoItem'}) SET n.file = 'components/TodoItem.jsx', n.parseError = false REMOVE n.state;
 MERGE (n:Component {name: 'TodoList'}) SET n.file = 'components/TodoList.jsx', n.parseError = false REMOVE n.state;
 MERGE (n:StoreKey {name: 'theme'});
